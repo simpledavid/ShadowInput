@@ -1,19 +1,16 @@
 export const dynamic = "force-dynamic";
 
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
+import { getSessionUserFromCookies } from "@/lib/auth/session";
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUserFromCookies();
 
   if (!user) redirect("/login");
 

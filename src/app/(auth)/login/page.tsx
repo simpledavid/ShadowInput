@@ -2,29 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
-import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: [
-          "https://www.googleapis.com/auth/youtube.readonly",
-          "https://www.googleapis.com/auth/youtube.force-ssl",
-        ].join(" "),
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-        },
-      },
-    });
+    window.location.href = "/api/auth/google/start";
   };
 
   return (

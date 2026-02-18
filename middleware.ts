@@ -1,54 +1,27 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+const SESSION_COOKIE_NAME = "si_user_id";
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // Refresh session — do not remove
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export function middleware(request: NextRequest) {
+  const userId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const isProtected =
     request.nextUrl.pathname.startsWith("/browse") ||
     request.nextUrl.pathname.startsWith("/watch") ||
     request.nextUrl.pathname.startsWith("/channel");
 
-  if (!user && isProtected) {
+  if (!userId && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users away from login page
-  if (user && request.nextUrl.pathname === "/login") {
+  if (userId && request.nextUrl.pathname === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/browse";
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {

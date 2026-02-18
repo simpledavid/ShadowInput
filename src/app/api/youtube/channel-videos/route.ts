@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getDB } from "@/lib/d1/client";
 import { getCachedVideos, upsertVideos } from "@/lib/d1/queries";
 import { fetchChannelVideos, fetchVideoDetails } from "@/lib/youtube/api";
+import { getSessionUserIdFromRequest } from "@/lib/auth/session";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -13,14 +13,15 @@ export async function GET(request: NextRequest) {
 
   if (!channelId) return NextResponse.json({ error: "Missing channelId" }, { status: 400 });
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getSessionUserIdFromRequest(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const db = await getDB();
   const tokenRow = await db
     .prepare("SELECT access_token FROM youtube_tokens WHERE user_id = ?")
-    .bind(user.id)
+    .bind(userId)
     .first<{ access_token: string }>();
   if (!tokenRow) return NextResponse.json({ error: "No YouTube token" }, { status: 401 });
 

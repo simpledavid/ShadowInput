@@ -1,18 +1,18 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDB } from "@/lib/d1/client";
+import { getSessionUserIdFromRequest } from "@/lib/auth/session";
+import { fetchWithProxy } from "@/lib/utils/fetch-with-proxy";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
-export async function POST() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function POST(request: NextRequest) {
+  const userId = getSessionUserIdFromRequest(request);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const db = await getDB();
   const tokenRow = await db
     .prepare("SELECT refresh_token, expires_at FROM youtube_tokens WHERE user_id = ?")
-    .bind(user.id)
+    .bind(userId)
     .first<{ refresh_token: string | null; expires_at: string }>();
 
   if (!tokenRow?.refresh_token) {
@@ -24,7 +24,7 @@ export async function POST() {
     return NextResponse.json({ success: true, alreadyValid: true });
   }
 
-  const resp = await fetch("https://oauth2.googleapis.com/token", {
+  const resp = await fetchWithProxy("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -45,7 +45,7 @@ export async function POST() {
     .bind(
       refreshed.access_token,
       new Date(Date.now() + (refreshed.expires_in ?? 3600) * 1000).toISOString(),
-      user.id
+      userId
     )
     .run();
 

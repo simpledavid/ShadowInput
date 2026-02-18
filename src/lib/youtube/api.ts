@@ -1,4 +1,5 @@
 import { iso8601ToSeconds } from "@/lib/utils/time";
+import { fetchWithProxy } from "@/lib/utils/fetch-with-proxy";
 import type { YouTubeVideo } from "@/types/youtube";
 
 const YOUTUBE_BASE = "https://www.googleapis.com/youtube/v3";
@@ -10,7 +11,7 @@ export async function fetchSubscriptions(accessToken: string, pageToken?: string
     maxResults: "50",
     ...(pageToken ? { pageToken } : {}),
   });
-  const res = await fetch(`${YOUTUBE_BASE}/subscriptions?${params}`, {
+  const res = await fetchWithProxy(`${YOUTUBE_BASE}/subscriptions?${params}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) {
@@ -34,7 +35,7 @@ export async function fetchChannelVideos(
     maxResults: "24",
     ...(pageToken ? { pageToken } : {}),
   });
-  const res = await fetch(`${YOUTUBE_BASE}/playlistItems?${params}`, {
+  const res = await fetchWithProxy(`${YOUTUBE_BASE}/playlistItems?${params}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`YouTube playlistItems API ${res.status}`);
@@ -51,7 +52,7 @@ export async function fetchVideoDetails(
     id: videoIds.join(","),
     maxResults: "50",
   });
-  const res = await fetch(`${YOUTUBE_BASE}/videos?${params}`, {
+  const res = await fetchWithProxy(`${YOUTUBE_BASE}/videos?${params}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`YouTube videos API ${res.status}`);
@@ -82,7 +83,7 @@ export async function fetchVideoDetails(
 
 export async function fetchCaptionsList(videoId: string, accessToken: string) {
   const params = new URLSearchParams({ part: "snippet", videoId });
-  const res = await fetch(`${YOUTUBE_BASE}/captions?${params}`, {
+  const res = await fetchWithProxy(`${YOUTUBE_BASE}/captions?${params}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`YouTube captions API ${res.status}`);
@@ -90,7 +91,7 @@ export async function fetchCaptionsList(videoId: string, accessToken: string) {
 }
 
 export async function downloadCaption(captionId: string, accessToken: string): Promise<string> {
-  const res = await fetch(
+  const res = await fetchWithProxy(
     `${YOUTUBE_BASE}/captions/${captionId}?tfmt=srt`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );

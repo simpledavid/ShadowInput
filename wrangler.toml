@@ -1,4 +1,4 @@
-name = "shadow-input"
+﻿name = "shadow-input"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
@@ -13,4 +13,5 @@ database_id = "fcc468fe-4846-494e-a3cb-535b1e5f3eaf"
 [vars]
 # Non-secret env vars can go here
 # Secret env vars (API keys) must be set in Cloudflare Pages dashboard
-NEXT_PUBLIC_APP_URL = "https://shadowinput.pages.dev"
+NEXT_PUBLIC_APP_URL = "https://shadowinput.com"
+

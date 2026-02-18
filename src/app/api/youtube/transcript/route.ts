@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getDB } from "@/lib/d1/client";
 import { getCachedTranscript, upsertTranscript, videoExists } from "@/lib/d1/queries";
 import { fetchTranscript } from "@/lib/youtube/transcript";
+import { getSessionUserIdFromRequest } from "@/lib/auth/session";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -19,13 +19,12 @@ export async function GET(request: NextRequest) {
   if (cached) return NextResponse.json({ ...cached, fromCache: true });
 
   // Get user's YouTube token for API fallback
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const userId = getSessionUserIdFromRequest(request);
   let accessToken: string | undefined;
-  if (user) {
+  if (userId) {
     const row = await db
       .prepare("SELECT access_token FROM youtube_tokens WHERE user_id = ?")
-      .bind(user.id)
+      .bind(userId)
       .first<{ access_token: string }>();
     accessToken = row?.access_token;
   }

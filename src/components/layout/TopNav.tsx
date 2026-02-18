@@ -1,20 +1,19 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 interface TopNavProps {
-  user?: { email?: string; user_metadata?: { avatar_url?: string; full_name?: string } };
+  user?: { email?: string; name?: string; image?: string | null };
 }
 
 export function TopNav({ user }: TopNavProps) {
-  const supabase = createClient();
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -27,11 +26,11 @@ export function TopNav({ user }: TopNavProps) {
       {user && (
         <div className="flex items-center gap-3">
           <span className="text-sm text-zinc-400">
-            {user.user_metadata?.full_name || user.email}
+            {user.name || user.email}
           </span>
-          {user.user_metadata?.avatar_url ? (
+          {user.image ? (
             <Image
-              src={user.user_metadata.avatar_url}
+              src={user.image}
               alt="Avatar"
               width={32}
               height={32}
@@ -39,7 +38,7 @@ export function TopNav({ user }: TopNavProps) {
             />
           ) : (
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500 text-sm font-semibold text-white">
-              {(user.user_metadata?.full_name || user.email || "U")[0].toUpperCase()}
+              {(user.name || user.email || "U")[0].toUpperCase()}
             </div>
           )}
           <button
