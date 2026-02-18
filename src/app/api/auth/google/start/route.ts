@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 const GOOGLE_CALLBACK_PATH = "/api/auth/oauth/google/callback";
 
 const GOOGLE_OAUTH_SCOPES = [

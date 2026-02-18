@@ -4,7 +4,7 @@ import {
   getSessionCookieOptions,
 } from "@/lib/auth/session";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function POST() {
   const response = NextResponse.json({ success: true });
