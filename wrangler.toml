@@ -3,7 +3,7 @@ compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 # Cloudflare Pages output (used by OpenNext)
-pages_build_output_dir = ".open-next/assets"
+pages_build_output_dir = ".open-next-pages"
 
 [[d1_databases]]
 binding = "DB"

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "pages:build": "npm run build:cf",
+    "pages:build": "npm run build:cf && node scripts/prepare-pages-functions.mjs",
     "build:cf": "npx @opennextjs/cloudflare build",
     "preview": "npx @opennextjs/cloudflare build && npx wrangler pages dev",
     "deploy": "npx @opennextjs/cloudflare build && npx wrangler pages deploy",
