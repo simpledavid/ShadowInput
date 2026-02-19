@@ -1,48 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
   <defs>
-    <linearGradient id="si-bg" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2c325d"/>
-      <stop offset="0.55" stop-color="#151a33"/>
-      <stop offset="1" stop-color="#070911"/>
+    <linearGradient id="si-bg" x1="6" y1="5" x2="42" y2="43" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#18284e"/>
+      <stop offset="0.55" stop-color="#0c142c"/>
+      <stop offset="1" stop-color="#070b19"/>
     </linearGradient>
-    <radialGradient id="si-glow" cx="0.28" cy="0.2" r="0.85">
-      <stop offset="0" stop-color="#9caeff" stop-opacity="0.35"/>
-      <stop offset="1" stop-color="#9caeff" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="si-main" x1="14" y1="12" x2="31" y2="35" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#d7deff"/>
-      <stop offset="1" stop-color="#8a9cff"/>
+    <linearGradient id="si-border" x1="7" y1="7" x2="42" y2="39" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8ef5ff"/>
+      <stop offset="1" stop-color="#ff7de9"/>
+    </linearGradient>
+    <linearGradient id="si-glyph" x1="14" y1="10" x2="30" y2="35" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dbfcff"/>
+      <stop offset="1" stop-color="#92f3ff"/>
     </linearGradient>
   </defs>
 
-  <rect width="48" height="48" rx="11" fill="url(#si-bg)"/>
-  <rect width="48" height="48" rx="11" fill="url(#si-glow)"/>
+  <rect x="2.5" y="2.5" width="43" height="43" rx="10" fill="url(#si-bg)"/>
+  <rect x="2.5" y="2.5" width="43" height="43" rx="10" fill="none" stroke="url(#si-border)" stroke-width="2.2" opacity="0.9"/>
 
   <path
-    d="M31 15C31 10 18 10 18 16C18 22 30 22 30 29C30 36 18 37 14 33"
-    fill="none"
-    stroke="#1c2156"
-    stroke-width="7.3"
-    stroke-linecap="round"
-    transform="translate(3.4,3.4)"
-    opacity="0.95"
+    d="M13 8H27L36 16V33H20L11 25V12Z"
+    fill="#0a132a"
+    stroke="#90f6ff"
+    stroke-width="2.5"
+    stroke-linejoin="bevel"
   />
 
   <path
-    d="M31 15C31 10 18 10 18 16C18 22 30 22 30 29C30 36 18 37 14 33"
+    d="M28.3 14.8C28.3 11.6 20.4 11.6 20.4 15.1C20.4 18.7 27.9 17.9 27.9 21.6C27.9 24.8 21 25.6 18.7 23.6"
     fill="none"
-    stroke="#4a59d8"
-    stroke-width="5.2"
+    stroke="#ff7de9"
+    stroke-width="4.2"
     stroke-linecap="round"
-    transform="translate(1.3,1.4)"
-    opacity="0.65"
+    opacity="0.35"
+    transform="translate(1.6,1.5)"
   />
 
   <path
-    d="M31 15C31 10 18 10 18 16C18 22 30 22 30 29C30 36 18 37 14 33"
+    d="M28.3 14.8C28.3 11.6 20.4 11.6 20.4 15.1C20.4 18.7 27.9 17.9 27.9 21.6C27.9 24.8 21 25.6 18.7 23.6"
     fill="none"
-    stroke="url(#si-main)"
-    stroke-width="3.7"
+    stroke="url(#si-glyph)"
+    stroke-width="3.1"
     stroke-linecap="round"
   />
+
+  <circle cx="31.2" cy="11.7" r="2.1" fill="#ff7eea"/>
+  <path d="M8.8 34.8H15.4" stroke="#86f4ff" stroke-width="2.1" stroke-linecap="round" opacity="0.9"/>
+  <path d="M33.2 38.4H39.2" stroke="#ff7eea" stroke-width="2.1" stroke-linecap="round" opacity="0.9"/>
 </svg>

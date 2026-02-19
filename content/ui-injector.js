@@ -19,11 +19,10 @@ ShadowInput.UIInjector = (() => {
       toggleBtnEl.id = 'si-toggle-btn';
       toggleBtnEl.title = 'Enter Learning Mode';
       toggleBtnEl.innerHTML = `
-        <svg class="si-toggle-icon" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true">
-          <rect x="1" y="1" width="3" height="8"></rect>
-          <rect x="6" y="1" width="3" height="8"></rect>
-          <rect x="4" y="2" width="2" height="1"></rect>
-          <rect x="4" y="7" width="2" height="1"></rect>
+        <svg class="si-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path class="si-icon-frame" d="M6 3.5H14.5L20.5 9V20.5H9L3.5 15V6Z"></path>
+          <path class="si-icon-glyph" d="M15.4 8.2C15.4 6.1 10.1 6.1 10.1 8.4C10.1 10.9 15.1 10.4 15.1 13C15.1 15.3 10.5 15.8 8.9 14.4"></path>
+          <circle class="si-icon-node" cx="17.6" cy="6.2" r="1.15"></circle>
         </svg>
       `;
       toggleBtnEl.addEventListener('click', (e) => {
