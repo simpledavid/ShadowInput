@@ -1,0 +1,729 @@
+/* ShadowInput – Learning UI Styles */
+
+/* ── CSS Variables ──────────────────────────────────────────────────────── */
+:root {
+  --si-bg: rgba(15, 15, 20, 0.92);
+  --si-bg-solid: #0f0f14;
+  --si-surface: rgba(30, 30, 40, 0.95);
+  --si-accent: #6366f1;
+  --si-accent-hover: #818cf8;
+  --si-accent-active: #4f46e5;
+  --si-text: #f1f5f9;
+  --si-text-muted: #94a3b8;
+  --si-text-dim: #64748b;
+  --si-border: rgba(255, 255, 255, 0.12);
+  --si-border-accent: rgba(99, 102, 241, 0.5);
+  --si-highlight: rgba(99, 102, 241, 0.3);
+  --si-word-hover-bg: rgba(99, 102, 241, 0.2);
+  --si-word-active-bg: rgba(99, 102, 241, 0.5);
+  --si-radius: 8px;
+  --si-radius-sm: 4px;
+  --si-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --si-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --si-z-base: 2147483000;
+}
+
+/* ── Toggle Button (inline in YouTube's right-controls bar) ─────────────── */
+#si-toggle-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border-radius: 0 !important;
+  padding: 2px !important;
+  background: #202739 !important;
+  border: 2px solid #8ea8df !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  opacity: 0.96 !important;
+  box-shadow: 2px 2px 0 #0f162d !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.12s ease !important;
+  vertical-align: middle !important;
+}
+
+#si-toggle-btn:hover {
+  border-color: #bfd2ff !important;
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0 #0f162d !important;
+}
+
+#si-toggle-btn.si-active {
+  border-color: #d6e3ff !important;
+  background: #2f4f8f !important;
+  box-shadow: 2px 2px 0 #0f162d, 0 0 0 2px rgba(214, 227, 255, 0.2) !important;
+}
+
+#si-toggle-btn .si-toggle-icon {
+  width: 18px;
+  height: 18px;
+  fill: #e6eeff;
+  image-rendering: pixelated;
+  display: block;
+  pointer-events: none;
+}
+
+#si-toggle-btn.si-active .si-toggle-icon {
+  fill: #ffffff;
+}
+
+/* ── Control Bar ────────────────────────────────────────────────────────── */
+#si-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--si-bg-solid);
+  border-bottom: 1px solid var(--si-border);
+  font-family: var(--si-font);
+  z-index: var(--si-z-base);
+  position: relative;
+}
+
+.si-mode-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.si-mode-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--si-text-muted);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  font-family: var(--si-font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.si-mode-tab:hover {
+  color: var(--si-text);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.si-mode-tab-active {
+  color: var(--si-text) !important;
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-color: var(--si-border-accent) !important;
+}
+
+/* ── Common Button ──────────────────────────────────────────────────────── */
+.si-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--si-text);
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius-sm);
+  font-family: var(--si-font);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.si-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.si-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.si-btn-add {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--si-border-accent);
+  color: var(--si-accent-hover);
+}
+
+.si-btn-add:hover {
+  background: rgba(99, 102, 241, 0.35);
+}
+
+.si-close-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.si-close-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+/* ── Caption Overlay ────────────────────────────────────────────────────── */
+#si-caption-overlay {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--si-z-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 88%;
+  padding: 8px 20px 10px;
+  background: rgba(0, 0, 0, 0.78);
+  border-radius: var(--si-radius);
+  font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
+  text-align: center;
+  pointer-events: auto;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  transition: bottom 0.2s ease;
+}
+
+/* Push up when controls visible */
+.ytp-autohide #si-caption-overlay {
+  bottom: 20px;
+}
+
+/* English line – hoverable words */
+.si-caption-en {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  font-size: clamp(16px, 2.2vw, 26px);
+  font-weight: 500;
+  color: white;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Chinese translation line */
+.si-caption-zh {
+  font-size: clamp(13px, 1.7vw, 20px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.4;
+  min-height: 1.3em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.si-word {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 2px;
+  transition: background 0.1s ease, color 0.1s ease;
+  position: relative;
+  display: inline;
+}
+
+.si-word:hover {
+  background: var(--si-word-hover-bg);
+  color: #c7d2fe;
+  outline: 1px solid var(--si-border-accent);
+}
+
+/* Saved words are tinted green in the overlay */
+.si-word.si-word-saved {
+  color: #4ade80;
+}
+
+.si-word.si-word-saved:hover {
+  background: rgba(74, 222, 128, 0.15);
+  color: #86efac;
+  outline-color: rgba(74, 222, 128, 0.4);
+}
+
+/* ── Word Popover (compact: word · translation · star) ──────────────────── */
+#si-word-popover {
+  position: fixed;
+  z-index: calc(var(--si-z-base) + 10);
+  display: none; /* shown as flex via JS */
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--si-surface);
+  border: 1px solid var(--si-border);
+  border-radius: 20px;
+  box-shadow: var(--si-shadow);
+  font-family: var(--si-font);
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  white-space: nowrap;
+}
+
+.si-popover-word {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--si-text-muted);
+  flex-shrink: 0;
+}
+
+.si-popover-translation {
+  font-size: 16px;
+  font-weight: 600;
+  color: #a5f3fc;
+  flex: 1;
+}
+
+/* Heart save button */
+.si-save-btn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid rgba(171, 208, 255, 0.35);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dbeafe;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.si-save-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(191, 210, 255, 0.62);
+  color: #eff6ff;
+}
+
+.si-save-btn:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.si-save-btn svg {
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+}
+
+.si-save-btn.si-saved {
+  background: rgba(99, 102, 241, 0.26);
+  border-color: rgba(194, 223, 255, 0.7);
+  color: #eef2ff;
+}
+
+/* Loading shimmer */
+.si-loading {
+  opacity: 0.45;
+  animation: si-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes si-pulse {
+  from { opacity: 0.3; }
+  to   { opacity: 0.6; }
+}
+
+/* ── Sentence Loop Panel ────────────────────────────────────────────────── */
+#si-loop-panel {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--si-z-base);
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  width: min(500px, 90%);
+  padding: 12px 16px;
+  background: var(--si-bg);
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius);
+  font-family: var(--si-font);
+  backdrop-filter: blur(12px);
+}
+
+.si-loop-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.si-loop-sentence {
+  font-size: 14px;
+  color: var(--si-text);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.si-loop-counter {
+  font-size: 11px;
+  color: var(--si-accent-hover);
+  background: rgba(99, 102, 241, 0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.si-loop-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.si-loop-controls .si-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.si-loop-settings {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--si-text-muted);
+}
+
+.si-loop-settings label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.si-loop-count-input {
+  width: 40px;
+  padding: 2px 4px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius-sm);
+  color: var(--si-text);
+  font-size: 12px;
+  text-align: center;
+}
+
+.si-loop-pause-check {
+  accent-color: var(--si-accent);
+}
+
+/* ── Transcript Panel ───────────────────────────────────────────────────── */
+#si-transcript-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--si-z-base) + 5);
+  display: none;
+  flex-direction: column;
+  width: min(380px, 35vw);
+  background: var(--si-bg-solid);
+  border-left: 1px solid var(--si-border);
+  font-family: var(--si-font);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.si-transcript-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--si-border);
+  flex-shrink: 0;
+}
+
+.si-transcript-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--si-text);
+}
+
+.si-transcript-close {
+  background: transparent;
+  border: none;
+  color: var(--si-text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--si-radius-sm);
+}
+
+.si-transcript-close:hover {
+  color: var(--si-text);
+  background: rgba(255,255,255,0.08);
+}
+
+.si-transcript-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99,102,241,0.4) transparent;
+}
+
+.si-transcript-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.si-transcript-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.si-transcript-list::-webkit-scrollbar-thumb {
+  background: rgba(99,102,241,0.4);
+  border-radius: 2px;
+}
+
+.si-transcript-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  border-radius: 0;
+}
+
+.si-transcript-item:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.si-transcript-active {
+  background: rgba(99, 102, 241, 0.15) !important;
+  border-left: 3px solid var(--si-accent);
+  padding-left: 13px !important;
+}
+
+.si-transcript-time {
+  font-size: 11px;
+  color: var(--si-accent-hover);
+  min-width: 38px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.si-transcript-text {
+  font-size: 13px;
+  color: var(--si-text);
+  line-height: 1.5;
+}
+
+/* ── Notice ─────────────────────────────────────────────────────────────── */
+.si-notice {
+  padding: 8px 16px;
+  font-family: var(--si-font);
+  font-size: 12px;
+  font-weight: 500;
+  z-index: var(--si-z-base);
+}
+
+.si-notice-warn {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: var(--si-radius-sm);
+  color: #fde68a;
+}
+
+/* No-caption notice: fixed, centered above controls */
+#si-no-caption-notice {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* ── Settings Panel ──────────────────────────────────────────────────────── */
+#si-settings-panel {
+  position: fixed;
+  z-index: calc(var(--si-z-base) + 20);
+  display: none; /* shown as flex by JS */
+  flex-direction: column;
+  width: 268px;
+  background: var(--si-surface);
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius);
+  box-shadow: var(--si-shadow), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  font-family: var(--si-font);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.si-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--si-border);
+  background: rgba(99, 102, 241, 0.08);
+  flex-shrink: 0;
+}
+
+.si-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--si-accent-hover);
+  letter-spacing: 0.4px;
+}
+
+.si-panel-close {
+  background: none;
+  border: none;
+  color: var(--si-text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: var(--si-radius-sm);
+  transition: color 0.15s, background 0.15s;
+}
+
+.si-panel-close:hover {
+  color: var(--si-text);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.si-panel-section {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.si-panel-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--si-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.si-panel-divider {
+  height: 1px;
+  background: var(--si-border);
+  flex-shrink: 0;
+}
+
+/* Learning mode button */
+.si-panel-mode-btn {
+  padding: 8px 16px;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--si-accent-hover);
+  border: 1px solid var(--si-border-accent);
+  border-radius: var(--si-radius-sm);
+  font-family: var(--si-font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-align: center;
+}
+
+.si-panel-mode-btn:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.si-panel-mode-btn-active {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.si-panel-mode-btn-active:hover {
+  background: rgba(239, 68, 68, 0.28) !important;
+}
+
+/* Caption mode radio group */
+.si-caption-mode-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.si-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--si-text);
+  font-size: 13px;
+  user-select: none;
+}
+
+.si-radio-label input[type="radio"] {
+  accent-color: var(--si-accent);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.si-radio-label:hover span {
+  color: var(--si-accent-hover);
+}
+
+/* API key row */
+.si-api-key-row {
+  display: flex;
+  gap: 6px;
+}
+
+.si-api-key-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius-sm);
+  color: var(--si-text);
+  font-family: var(--si-font);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.si-api-key-input:focus {
+  border-color: var(--si-border-accent);
+}
+
+.si-api-key-input::placeholder {
+  color: var(--si-text-dim);
+}
+
+.si-api-save-btn {
+  padding: 6px 10px;
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--si-accent-hover);
+  border: 1px solid var(--si-border-accent);
+  border-radius: var(--si-radius-sm);
+  font-family: var(--si-font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.si-api-save-btn:hover {
+  background: rgba(99, 102, 241, 0.35);
+}
+
+.si-api-save-msg {
+  font-size: 11px;
+  color: #4ade80;
+  min-height: 14px;
+  line-height: 1.2;
+}
+
+/* ── Fullscreen adjustments ─────────────────────────────────────────────── */
+:fullscreen #si-caption-overlay,
+:-webkit-full-screen #si-caption-overlay,
+:-moz-full-screen #si-caption-overlay {
+  bottom: 90px;
+}
+
+:fullscreen #si-loop-panel,
+:-webkit-full-screen #si-loop-panel {
+  bottom: 90px;
+}
+
+/* Toggle button is always visible (fixed position, not inside player) */

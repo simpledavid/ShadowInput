@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShadowInput Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      background: #0a0a10;
+      color: #f1f5f9;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(146, 159, 255, 0.35);
+      background: linear-gradient(160deg, rgba(38, 43, 78, 0.7), rgba(10, 12, 22, 0.85));
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .page-header p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 16px;
+    }
+
+    .field:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .field:first-of-type {
+      padding-top: 0;
+    }
+
+    .field-label {
+      flex: 1;
+    }
+
+    .field-label strong {
+      display: block;
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+
+    .field-label span {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    input[type="number"],
+    input[type="password"] {
+      width: 110px;
+      padding: 7px 10px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: #f1f5f9;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="number"]:focus,
+    input[type="password"]:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+    }
+
+    .save-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-save {
+      padding: 10px 24px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-save:hover {
+      background: #4f46e5;
+    }
+
+    .btn-reset {
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-reset:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f1f5f9;
+    }
+
+    #save-status {
+      font-size: 13px;
+      color: #4ade80;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #save-status.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="page-header">
+    <div class="logo">
+      <img src="../icons/icon48.png" alt="ShadowInput">
+    </div>
+    <div>
+      <h1>ShadowInput Settings</h1>
+      <p>Word-hover learning controls</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Word Hover</div>
+
+    <div class="field">
+      <div class="field-label">
+        <strong>Dwell time before pause</strong>
+        <span>How long your cursor must stay on a word before video pauses (ms)</span>
+      </div>
+      <input type="number" id="dwell-ms" min="0" max="2000" step="10" value="80">
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <strong>Resume delay after leaving word</strong>
+        <span>How long to wait before resuming playback (ms)</span>
+      </div>
+      <input type="number" id="resume-delay-ms" min="0" max="2000" step="10" value="150">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Online Fallback</div>
+
+    <div class="field">
+      <div class="field-label">
+        <strong>DeepSeek API key (optional)</strong>
+        <span>Used only when the fast online lookup cannot find a translation.</span>
+      </div>
+      <input
+        type="password"
+        id="deepseek-key"
+        placeholder="sk-..."
+        autocomplete="off"
+        spellcheck="false"
+        style="width: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;"
+      >
+    </div>
+  </div>
+
+  <div class="save-row">
+    <button class="btn-save" id="save-btn">Save Settings</button>
+    <button class="btn-reset" id="reset-btn">Reset to Defaults</button>
+    <span id="save-status">Saved</span>
+  </div>
+</div>
+
+<script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "ShadowInput - YouTube 学习模式",
+  "version": "0.1.0",
+  "description": "YouTube 字幕悬停暂停学习插件，支持查词、双语字幕与生词收藏。",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://translate.googleapis.com/*",
+    "https://api.deepseek.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "js": [
+        "content/local-dict.js",
+        "content/flashcard-store.js",
+        "content/caption-provider.js",
+        "content/player-controller.js",
+        "content/word-hover.js",
+        "content/ui-injector.js",
+        "content/content.js"
+      ],
+      "css": ["styles/learning-ui.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options/options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["https://www.youtube.com/*"]
+    }
+  ]
+}
