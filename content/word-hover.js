@@ -49,58 +49,7 @@ ShadowInput.WordHoverMode = (() => {
     return [...new Set((list || []).filter(Boolean))];
   }
 
-  function buildVariantForms(rawWord) {
-    const word = String(rawWord || '').toLowerCase();
-    const forms = [word];
-
-    if (word.endsWith("'s")) forms.push(word.slice(0, -2));
-    if (word.endsWith('s') && word.length > 3) forms.push(word.slice(0, -1));
-    if (word.endsWith('es') && word.length > 4) forms.push(word.slice(0, -2));
-    if (word.endsWith('ies') && word.length > 4) forms.push(word.slice(0, -3) + 'y');
-
-    if (word.endsWith('ing') && word.length > 5) {
-      forms.push(word.slice(0, -3));
-      forms.push(word.slice(0, -3) + 'e');
-      if (word.length > 6 && word[word.length - 4] === word[word.length - 5]) {
-        forms.push(word.slice(0, -4));
-      }
-    }
-
-    if (word.endsWith('ed') && word.length > 4) {
-      forms.push(word.slice(0, -2));
-      forms.push(word.slice(0, -1));
-      forms.push(word.slice(0, -2) + 'e');
-      if (word.length > 5 && word[word.length - 3] === word[word.length - 4]) {
-        forms.push(word.slice(0, -3));
-      }
-    }
-
-    if (word.endsWith('er') && word.length > 4) forms.push(word.slice(0, -2));
-    if (word.endsWith('est') && word.length > 5) forms.push(word.slice(0, -3));
-
-    return unique(forms);
-  }
-
-  function lookupFromLocal(word) {
-    const dict = ShadowInput.LocalDict;
-    if (!dict || !word) return null;
-
-    const forms = buildVariantForms(word);
-    for (const form of forms) {
-      const hit = dict.lookup(form);
-      if (hit && hit.translation) {
-        return {
-          translation: hit.translation || '',
-          definition: hit.definition || '',
-          phonetic: hit.phonetic || '',
-          source: 'local',
-        };
-      }
-    }
-    return null;
-  }
-
-  function lookupOnline(word) {
+  function lookupWordViaBackground(word) {
     return new Promise((resolve) => {
       chrome.runtime.sendMessage({ type: 'LOOKUP_WORD', word }, (resp) => {
         if (chrome.runtime.lastError || !resp) {
@@ -119,20 +68,14 @@ ShadowInput.WordHoverMode = (() => {
     if (lookupPending.has(key)) return lookupPending.get(key);
 
     const pending = (async () => {
-      const localHit = lookupFromLocal(key);
-      if (localHit) {
-        lookupCache.set(key, localHit);
-        return localHit;
-      }
-
-      const onlineHit = await lookupOnline(key);
+      const lookupResp = await lookupWordViaBackground(key);
       const result =
-        onlineHit && onlineHit.translation
+        lookupResp && lookupResp.translation
           ? {
-              translation: onlineHit.translation || '',
-              definition: onlineHit.definition || '',
-              phonetic: onlineHit.phonetic || '',
-              source: onlineHit.source || 'online',
+              translation: lookupResp.translation || '',
+              definition: lookupResp.definition || '',
+              phonetic: lookupResp.phonetic || '',
+              source: lookupResp.source || 'online',
             }
           : {
               translation: '',

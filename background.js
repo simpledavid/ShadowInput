@@ -3,13 +3,19 @@
 
 const SETTINGS_KEY = 'si_settings';
 const LOOKUP_CACHE_KEY = 'si_lookup_cache';
-const LOOKUP_CACHE_LIMIT = 20000;
+const LOOKUP_CACHE_LIMIT = 12000;
+const LOOKUP_CACHE_MAX_BYTES = 6 * 1024 * 1024;
+const LOCAL_DICT_SCRIPT = 'content/local-dict-data.js';
 
 const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
 const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/v1/chat/completions';
 const DEEPSEEK_MODEL = 'deepseek-chat';
 
+const UTF8_ENCODER = new TextEncoder();
+
 let lookupCache = null;
+let localDict = null;
+let localDictInitTried = false;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(SETTINGS_KEY, (data) => {
@@ -72,6 +78,9 @@ async function handleLookupWord(rawWord) {
   if (!word) return { error: 'empty_word', translation: '', definition: '', phonetic: '' };
 
   try {
+    const localHit = lookupFromLocalDict(word);
+    if (localHit) return localHit;
+
     const cache = await getLookupCache();
     if (cache[word]) return { ...cache[word], source: 'cache' };
 
@@ -254,14 +263,114 @@ async function fetchDeepSeekSentenceTranslation(text) {
 }
 
 function pruneCache(cache) {
-  const keys = Object.keys(cache);
-  if (keys.length <= LOOKUP_CACHE_LIMIT) return;
+  const items = Object.keys(cache).map((k) => ({
+    k,
+    ts: Number(cache[k]?.ts || 0),
+    size: estimateEntrySize(k, cache[k]),
+  }));
 
-  keys
-    .map((k) => ({ k, ts: Number(cache[k]?.ts || 0) }))
-    .sort((a, b) => a.ts - b.ts)
-    .slice(0, keys.length - LOOKUP_CACHE_LIMIT)
-    .forEach(({ k }) => {
-      delete cache[k];
-    });
+  let totalBytes = items.reduce((sum, it) => sum + it.size, 0);
+  if (items.length <= LOOKUP_CACHE_LIMIT && totalBytes <= LOOKUP_CACHE_MAX_BYTES) return;
+
+  items.sort((a, b) => a.ts - b.ts);
+
+  for (const item of items) {
+    if (Object.keys(cache).length <= LOOKUP_CACHE_LIMIT && totalBytes <= LOOKUP_CACHE_MAX_BYTES) {
+      break;
+    }
+    if (!cache[item.k]) continue;
+    delete cache[item.k];
+    totalBytes -= item.size;
+  }
+}
+
+function estimateEntrySize(key, entry) {
+  return (
+    UTF8_ENCODER.encode(String(key || '')).length +
+    UTF8_ENCODER.encode(JSON.stringify(entry || {})).length +
+    32
+  );
+}
+
+function lookupFromLocalDict(rawWord) {
+  const dict = ensureLocalDictLoaded();
+  if (!dict) return null;
+
+  const forms = buildVariantForms(rawWord);
+  for (const form of forms) {
+    const hit = normalizeLocalEntry(dict[form]);
+    if (!hit) continue;
+    if (!hit.translation && !hit.definition) continue;
+    return {
+      translation: hit.translation || hit.definition || '',
+      definition: hit.definition || '',
+      phonetic: hit.phonetic || '',
+      source: 'local',
+    };
+  }
+  return null;
+}
+
+function ensureLocalDictLoaded() {
+  if (localDict) return localDict;
+  if (localDictInitTried) return localDict;
+  localDictInitTried = true;
+
+  try {
+    self.ShadowInput = self.ShadowInput || {};
+    importScripts(chrome.runtime.getURL(LOCAL_DICT_SCRIPT));
+    const data = self.ShadowInput?.LocalDictData;
+    if (data && typeof data === 'object') {
+      localDict = data;
+    }
+  } catch (_) {
+    localDict = null;
+  }
+
+  return localDict;
+}
+
+function normalizeLocalEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  return {
+    translation: String(entry.t || entry.translation || '').trim(),
+    definition: String(entry.d || entry.definition || '').trim(),
+    phonetic: String(entry.p || entry.phonetic || '').trim(),
+  };
+}
+
+function unique(list) {
+  return [...new Set((list || []).filter(Boolean))];
+}
+
+function buildVariantForms(rawWord) {
+  const word = String(rawWord || '').toLowerCase();
+  const forms = [word];
+
+  if (word.endsWith("'s")) forms.push(word.slice(0, -2));
+  if (word.endsWith('s') && word.length > 3) forms.push(word.slice(0, -1));
+  if (word.endsWith('es') && word.length > 4) forms.push(word.slice(0, -2));
+  if (word.endsWith('ies') && word.length > 4) forms.push(word.slice(0, -3) + 'y');
+
+  if (word.endsWith('ing') && word.length > 5) {
+    forms.push(word.slice(0, -3));
+    forms.push(word.slice(0, -3) + 'e');
+    if (word.length > 6 && word[word.length - 4] === word[word.length - 5]) {
+      forms.push(word.slice(0, -4));
+    }
+  }
+
+  if (word.endsWith('ed') && word.length > 4) {
+    forms.push(word.slice(0, -2));
+    forms.push(word.slice(0, -1));
+    forms.push(word.slice(0, -2) + 'e');
+    if (word.length > 5 && word[word.length - 3] === word[word.length - 4]) {
+      forms.push(word.slice(0, -3));
+    }
+  }
+
+  if (word.endsWith('er') && word.length > 4) forms.push(word.slice(0, -2));
+  if (word.endsWith('est') && word.length > 5) forms.push(word.slice(0, -3));
+
+  return unique(forms);
 }
