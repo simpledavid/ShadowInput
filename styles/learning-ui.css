@@ -72,42 +72,44 @@
 }
 
 #si-toggle-btn .si-toggle-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: block;
   pointer-events: none;
-  filter: drop-shadow(0 0 4px rgba(0, 231, 255, 0.35));
-}
-
-#si-toggle-btn .si-icon-frame {
-  fill: rgba(8, 14, 31, 0.78);
-  stroke: rgba(137, 247, 255, 0.95);
-  stroke-width: 1.6;
-  stroke-linejoin: bevel;
+  filter: drop-shadow(0 0 5px rgba(0, 231, 255, 0.38));
 }
 
 #si-toggle-btn .si-icon-glyph {
   fill: none;
-  stroke: rgba(212, 250, 255, 0.96);
-  stroke-width: 1.75;
+  stroke: rgba(219, 252, 255, 0.98);
+  stroke-width: 2.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#si-toggle-btn .si-icon-glyph-tail {
+  fill: none;
+  stroke: rgba(130, 244, 255, 0.98);
+  stroke-width: 2.05;
   stroke-linecap: round;
 }
 
 #si-toggle-btn .si-icon-node {
   fill: rgba(255, 88, 232, 0.95);
-}
-
-#si-toggle-btn.si-active .si-icon-frame {
-  fill: rgba(22, 10, 36, 0.8);
-  stroke: rgba(255, 145, 243, 0.97);
+  filter: drop-shadow(0 0 4px rgba(255, 88, 232, 0.5));
 }
 
 #si-toggle-btn.si-active .si-icon-glyph {
   stroke: rgba(150, 250, 255, 1);
 }
 
+#si-toggle-btn.si-active .si-icon-glyph-tail {
+  stroke: rgba(255, 135, 241, 0.98);
+}
+
 #si-toggle-btn.si-active .si-icon-node {
   fill: rgba(114, 247, 255, 0.97);
+  filter: drop-shadow(0 0 5px rgba(114, 247, 255, 0.58));
 }
 
 /* ── Control Bar ────────────────────────────────────────────────────────── */
