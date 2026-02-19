@@ -240,22 +240,32 @@
   justify-content: center;
   align-items: center;
   gap: 0;
-  font-size: clamp(16px, 2.2vw, 26px);
-  font-weight: 500;
+  font-size: clamp(20px, 2.9vw, 34px);
+  font-weight: 600;
   color: white;
-  line-height: 1.4;
+  line-height: 1.35;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 /* Chinese translation line */
 .si-caption-zh {
-  font-size: clamp(13px, 1.7vw, 20px);
+  font-size: clamp(16px, 2.2vw, 26px);
   font-weight: 400;
   color: rgba(255, 255, 255, 0.82);
-  line-height: 1.4;
-  min-height: 1.3em;
+  line-height: 1.45;
+  min-height: 1.4em;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+@media (max-width: 900px) {
+  .si-caption-en {
+    font-size: clamp(18px, 4.2vw, 28px);
+  }
+
+  .si-caption-zh {
+    font-size: clamp(14px, 3.4vw, 21px);
+  }
 }
 
 .si-word {

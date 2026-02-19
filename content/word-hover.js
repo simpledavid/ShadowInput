@@ -17,7 +17,8 @@ ShadowInput.WordHoverMode = (() => {
   let activeWord = null;
   let isMouseInPopover = false;
   let isMouseInWord = false;
-  let pausedByHover = false;
+  let pauseTokenSeed = 0;
+  let activePauseToken = null;
   let lastMouseX = 0;
   let lastMouseY = 0;
   let hasMousePos = false;
@@ -386,12 +387,12 @@ ShadowInput.WordHoverMode = (() => {
     isMouseInPopover = false;
   }
 
-  function scheduleResume() {
+  function scheduleResume(expectedToken = activePauseToken) {
     cancelResume();
     resumeTimer = setTimeout(() => {
       refreshHoverFlagsFromPointer();
       if (isMouseInWord || isMouseInPopover) {
-        scheduleResume(); // keep retrying until cursor fully leaves
+        scheduleResume(expectedToken); // keep retrying until cursor fully leaves
         return;
       }
 
@@ -399,9 +400,11 @@ ShadowInput.WordHoverMode = (() => {
       activeWord = null;
       hidePopover();
 
-      const shouldResume = pausedByHover;
-      pausedByHover = false;
-      if (shouldResume && PC().isPaused()) PC().play();
+      if (expectedToken == null) return;
+      if (activePauseToken !== expectedToken) return;
+
+      activePauseToken = null;
+      if (PC().isPaused()) PC().play();
     }, settings.resumeDelayMs);
   }
 
@@ -430,7 +433,8 @@ ShadowInput.WordHoverMode = (() => {
       state = S.PAUSED;
       if (!PC().isPaused()) {
         PC().pause();
-        pausedByHover = true;
+        pauseTokenSeed += 1;
+        activePauseToken = pauseTokenSeed;
       }
       showPopover(word, span);
     }, settings.dwellMs);
@@ -498,7 +502,7 @@ ShadowInput.WordHoverMode = (() => {
   function activate(opts = {}) {
     settings = { ...settings, ...opts };
     state = S.IDLE;
-    pausedByHover = false;
+    activePauseToken = null;
     loadSavedWords(); // async, non-blocking
     ensureOverlay();
     if (overlayEl) overlayEl.style.display = 'flex';
@@ -525,7 +529,7 @@ ShadowInput.WordHoverMode = (() => {
     activeWord = null;
     isMouseInWord = false;
     isMouseInPopover = false;
-    pausedByHover = false;
+    activePauseToken = null;
     hasMousePos = false;
     currentSentence = '';
 
