@@ -216,9 +216,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  max-width: 88%;
-  padding: 8px 20px 10px;
+  gap: 6px;
+  max-width: 92%;
+  padding: 12px 26px 14px;
   background: rgba(0, 0, 0, 0.78);
   border-radius: var(--si-radius);
   font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
@@ -240,38 +240,48 @@
   justify-content: center;
   align-items: center;
   gap: 0;
-  font-size: clamp(20px, 2.9vw, 34px);
-  font-weight: 600;
+  font-size: clamp(28px, 4.2vw, 54px);
+  font-weight: 700;
   color: white;
-  line-height: 1.35;
+  line-height: 1.28;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 /* Chinese translation line */
 .si-caption-zh {
-  font-size: clamp(16px, 2.2vw, 26px);
-  font-weight: 400;
+  font-size: clamp(22px, 3.3vw, 40px);
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.82);
-  line-height: 1.45;
+  line-height: 1.34;
   min-height: 1.4em;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 @media (max-width: 900px) {
   .si-caption-en {
-    font-size: clamp(18px, 4.2vw, 28px);
+    font-size: clamp(24px, 6.4vw, 42px);
   }
 
   .si-caption-zh {
-    font-size: clamp(14px, 3.4vw, 21px);
+    font-size: clamp(18px, 4.9vw, 30px);
+  }
+}
+
+@media (max-width: 600px) {
+  .si-caption-en {
+    font-size: clamp(20px, 7.2vw, 34px);
+  }
+
+  .si-caption-zh {
+    font-size: clamp(16px, 5.6vw, 24px);
   }
 }
 
 .si-word {
   cursor: pointer;
-  border-radius: 3px;
-  padding: 1px 2px;
+  border-radius: 4px;
+  padding: 1px 3px;
   transition: background 0.1s ease, color 0.1s ease;
   position: relative;
   display: inline;
