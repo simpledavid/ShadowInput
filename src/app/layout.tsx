@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ShadowInput — YouTube English Learning",
-  description: "Learn English by watching your YouTube subscriptions with interactive transcripts and AI explanations.",
+  title: "ShadowInput | YouTube 字幕学习插件",
+  description: "支持悬停暂停查词、双语字幕、生词收藏导出的 YouTube 学习插件。",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="zh-CN" className="dark">
       <body className="antialiased bg-zinc-950 text-zinc-100 min-h-screen">
         {children}
       </body>
