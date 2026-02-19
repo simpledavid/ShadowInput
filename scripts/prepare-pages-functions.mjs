@@ -52,6 +52,45 @@ async function patchNodeSqliteRequires(baseDir) {
   }
 }
 
+async function patchWorkerStaticAssetFallback(baseDir) {
+  const workerPath = join(baseDir, "_worker.js");
+  let source;
+  try {
+    source = await readFile(workerPath, "utf8");
+  } catch {
+    return;
+  }
+
+  if (source.includes("ShadowInput static asset fallback")) {
+    return;
+  }
+
+  const needle = "const url = new URL(request.url);";
+  if (!source.includes(needle)) {
+    return;
+  }
+
+  const fallbackCode = `${needle}
+            // ShadowInput static asset fallback:
+            // ensure _next/css/js and downloadable files are served from ASSETS.
+            if (env.ASSETS && (request.method === "GET" || request.method === "HEAD")) {
+                const staticAssetPath = url.pathname.startsWith("/_next/") ||
+                    /\\.(?:css|js|mjs|map|ico|svg|png|jpg|jpeg|gif|webp|avif|txt|xml|json|woff2?|ttf|eot|zip)$/i.test(url.pathname);
+                if (staticAssetPath) {
+                    const assetResp = await env.ASSETS.fetch(request);
+                    if (assetResp && assetResp.status !== 404) {
+                        return assetResp;
+                    }
+                }
+            }`;
+
+  const patched = source.replace(needle, fallbackCode);
+  if (patched !== source) {
+    await writeFile(workerPath, patched, "utf8");
+    console.log("Patched _worker.js with static asset fallback");
+  }
+}
+
 for (const entry of entries) {
   const sourcePath = join(openNextDir, entry.name);
 
@@ -81,5 +120,6 @@ for (const entry of entries) {
 }
 
 await patchNodeSqliteRequires(outDir);
+await patchWorkerStaticAssetFallback(outDir);
 
 console.log("Prepared Pages Functions output at .open-next-pages");
