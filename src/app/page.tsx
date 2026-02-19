@@ -1,214 +1,535 @@
 const LANDING_CSS = `
-  .landing {
-    min-height: 100vh;
-    color: #f4f7ff;
-    background: #050a16;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    position: relative;
-    overflow: hidden;
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans+SC:wght@400;500;700&display=swap");
+
+:root {
+  --bg: #060b16;
+  --surface: rgba(14, 22, 43, 0.8);
+  --surface-strong: rgba(12, 18, 35, 0.92);
+  --line: rgba(152, 217, 255, 0.22);
+  --text: #f4f8ff;
+  --muted: rgba(212, 224, 246, 0.76);
+  --cyan: #76ecff;
+  --blue: #4e7dff;
+  --magenta: #ff72df;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+}
+
+.landing {
+  min-height: 100vh;
+  color: var(--text);
+  font-family: "Sora", "IBM Plex Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 12% -6%, rgba(75, 131, 255, 0.32), transparent 38%),
+    radial-gradient(circle at 86% 12%, rgba(0, 223, 255, 0.22), transparent 36%),
+    radial-gradient(circle at 70% 82%, rgba(255, 103, 231, 0.18), transparent 34%);
+}
+
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(137, 203, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(137, 203, 255, 0.08) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(circle at 50% 30%, black, transparent 75%);
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 92vw);
+  margin: 0 auto;
+  padding: 28px 0 52px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 16px;
+  background: rgba(11, 18, 36, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 20px;
+  color: #e9fdff;
+  border: 1px solid rgba(154, 231, 255, 0.62);
+  background: linear-gradient(145deg, rgba(69, 120, 255, 0.55), rgba(29, 48, 95, 0.78), rgba(253, 115, 231, 0.45));
+  box-shadow: 0 10px 28px rgba(20, 31, 64, 0.55);
+}
+
+.brand-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.brand-sub {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill {
+  border: 1px solid rgba(156, 208, 255, 0.38);
+  border-radius: 999px;
+  color: #d5e8ff;
+  background: rgba(90, 125, 214, 0.16);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: 11px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.btn-primary {
+  color: #051122;
+  background: linear-gradient(90deg, var(--cyan), #6ca7ff);
+  border-color: rgba(153, 231, 255, 0.42);
+  padding: 0 16px;
+}
+
+.hero {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+}
+
+.hero-main {
+  padding: 28px;
+}
+
+.badge {
+  display: inline-block;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 146, 239, 0.5);
+  background: rgba(255, 110, 227, 0.12);
+  color: #ffd8f8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 5px 12px;
+}
+
+.hero h1 {
+  margin: 14px 0 0;
+  font-size: clamp(34px, 5vw, 62px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.hero-desc {
+  margin: 14px 0 0;
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.9;
+  font-size: 15px;
+}
+
+.hero-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn-secondary {
+  color: #d2f8ff;
+  border-color: rgba(129, 230, 255, 0.34);
+  background: rgba(66, 194, 255, 0.12);
+  padding: 0 16px;
+}
+
+.chips {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #d6e7ff;
+  border: 1px solid rgba(157, 186, 255, 0.28);
+  background: rgba(89, 111, 176, 0.15);
+}
+
+.hero-side {
+  padding: 18px;
+  background: linear-gradient(170deg, rgba(13, 22, 43, 0.94), rgba(8, 14, 29, 0.95));
+}
+
+.preview-title {
+  margin: 0;
+  font-size: 13px;
+  color: #bcefff;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.subtitle-box {
+  margin-top: 12px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(145, 190, 255, 0.28);
+  background: rgba(8, 13, 26, 0.74);
+}
+
+.en-line {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.zh-line {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #b9f6ff;
+}
+
+.ai-soon {
+  margin-top: 14px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 128, 235, 0.32);
+  background: rgba(255, 91, 224, 0.08);
+}
+
+.ai-soon p {
+  margin: 0;
+}
+
+.ai-soon .t1 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffc8f5;
+}
+
+.ai-soon .t2 {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #f8def8;
+  line-height: 1.7;
+}
+
+.section {
+  margin-top: 16px;
+}
+
+.section-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.feature-card {
+  border: 1px solid rgba(151, 214, 255, 0.2);
+  border-radius: 14px;
+  padding: 15px;
+  background: var(--surface-strong);
+}
+
+.feature-no {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #8eeeff;
+  font-weight: 700;
+}
+
+.feature-title {
+  margin: 6px 0 0;
+  font-size: 19px;
+}
+
+.feature-desc {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.feature-status {
+  margin-top: 10px;
+  display: inline-block;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 157, 239, 0.4);
+  color: #ffd5f7;
+  background: rgba(255, 103, 229, 0.12);
+}
+
+.roadmap {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 16px;
+}
+
+.road-list {
+  margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.road-item {
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(154, 208, 255, 0.23);
+  background: rgba(10, 16, 30, 0.72);
+}
+
+.road-item .phase {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #97ecff;
+}
+
+.road-item .name {
+  margin: 6px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.road-item .desc {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.72;
+  color: var(--muted);
+}
+
+.install {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.install-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.install-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(132, 182, 255, 0.24);
+  background: rgba(9, 15, 28, 0.7);
+}
+
+.step-no {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: 0 0 22px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #041322;
+  background: linear-gradient(140deg, #8af1ff, #70a4ff);
+}
+
+.step-text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #e6efff;
+}
+
+.footer {
+  margin-top: 18px;
+  text-align: center;
+  color: rgba(174, 197, 235, 0.74);
+  font-size: 12px;
+}
+
+@media (max-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr;
   }
-  .bg-glow {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(circle at 14% 0%, rgba(76, 130, 255, 0.22), transparent 42%),
-      radial-gradient(circle at 82% 18%, rgba(0, 229, 255, 0.14), transparent 40%),
-      radial-gradient(circle at 74% 84%, rgba(255, 75, 220, 0.12), transparent 38%);
+  .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .road-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
   .wrap {
-    position: relative;
-    width: min(1120px, 92vw);
-    margin: 0 auto;
-    padding: 24px 0 36px;
-  }
-  .topbar,
-  .hero,
-  .card,
-  .install {
-    border: 1px solid rgba(162, 244, 253, 0.2);
-    background: rgba(13, 20, 41, 0.84);
-    border-radius: 16px;
-    backdrop-filter: blur(8px);
+    padding-top: 16px;
   }
   .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
+    flex-direction: column;
+    align-items: flex-start;
   }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .logo {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    font-size: 22px;
-    font-weight: 900;
-    color: #d7fbff;
-    border: 1px solid rgba(162, 244, 253, 0.6);
-    background: linear-gradient(135deg, rgba(83, 234, 253, 0.35), rgba(48, 128, 255, 0.35), rgba(236, 108, 255, 0.35));
-  }
-  .brand-name {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 700;
-    color: #f4f7ff;
-  }
-  .brand-sub {
-    margin: 0;
-    font-size: 12px;
-    color: rgba(206, 250, 254, 0.78);
-  }
-  .hero {
-    margin-top: 24px;
-    display: grid;
-    grid-template-columns: 1.25fr 1fr;
-    gap: 18px;
-    padding: 24px;
-  }
-  .badge {
-    display: inline-block;
-    margin: 0;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(242, 169, 255, 0.45);
-    background: rgba(236, 108, 255, 0.1);
-    color: rgba(250, 232, 255, 0.95);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-  }
-  h1 {
-    margin: 14px 0 0;
-    font-size: clamp(30px, 5vw, 54px);
-    line-height: 1.15;
-  }
-  .desc {
-    margin-top: 14px;
-    max-width: 720px;
-    color: rgba(228, 228, 231, 0.9);
-    line-height: 1.9;
-    font-size: 15px;
-  }
-  .actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 12px;
+  .top-actions {
+    width: 100%;
+    justify-content: flex-start;
     flex-wrap: wrap;
   }
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    padding: 0 18px;
-    border-radius: 10px;
-    border: 1px solid rgba(162, 244, 253, 0.4);
-    color: #071024;
-    font-weight: 700;
-    font-size: 14px;
-    text-decoration: none;
-    background: linear-gradient(90deg, #00d2ef, #3080ff);
+  .hero-main,
+  .hero-side,
+  .install,
+  .roadmap {
+    padding: 14px;
   }
-  .btn-ghost {
-    color: #cefafe;
-    background: rgba(83, 234, 253, 0.14);
+  .hero h1 {
+    font-size: 34px;
   }
-  .btn-small {
-    height: 36px;
-    font-size: 13px;
-    padding: 0 14px;
+  .features {
+    grid-template-columns: 1fr;
   }
-  .hero-side {
-    border: 1px solid rgba(83, 234, 253, 0.24);
-    border-radius: 12px;
-    background: #0a1022;
-    padding: 16px;
-  }
-  .kicker {
-    margin: 0;
-    color: rgba(206, 250, 254, 0.78);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-  }
-  .line {
-    margin: 12px 0 0;
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 15px;
-    line-height: 1.55;
-  }
-  .line-en {
-    border: 1px solid rgba(63, 63, 70, 0.9);
-    background: rgba(24, 24, 27, 0.74);
-    color: rgba(228, 228, 231, 0.95);
-  }
-  .line-zh {
-    border: 1px solid rgba(83, 234, 253, 0.33);
-    background: rgba(0, 210, 239, 0.12);
-    color: #cefafe;
-  }
-  .grid {
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-  }
-  .card {
-    padding: 18px;
-  }
-  .tag {
-    margin: 0;
-    color: rgba(206, 250, 254, 0.78);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-  }
-  h2 {
-    margin: 8px 0 0;
-    font-size: 22px;
-  }
-  .card p {
-    margin: 10px 0 0;
-    color: rgba(212, 212, 216, 0.9);
-    line-height: 1.8;
-    font-size: 14px;
-  }
-  .install {
-    margin-top: 20px;
-    padding: 20px;
-  }
-  .install ol {
-    margin: 14px 0 0;
-    padding-left: 20px;
-  }
-  .install li {
-    margin: 10px 0;
-    color: rgba(228, 228, 231, 0.92);
-    line-height: 1.8;
-  }
-  @media (max-width: 900px) {
-    .hero {
-      grid-template-columns: 1fr;
-    }
-    .grid {
-      grid-template-columns: 1fr;
-    }
-  }
+}
 `;
+
+const FEATURES = [
+  {
+    no: "01",
+    title: "悬停即查词",
+    desc: "鼠标停在单词上，视频自动暂停并展示释义，移开自动继续播放。",
+  },
+  {
+    no: "02",
+    title: "双语字幕对照",
+    desc: "英文字幕下方实时显示中文，边看边懂，跟读与理解更顺滑。",
+  },
+  {
+    no: "03",
+    title: "生词收藏导出",
+    desc: "遇到重点词一键加入生词本，后续在扩展里统一复习并导出。",
+  },
+  {
+    no: "04",
+    title: "AI 字幕（即将上线）",
+    desc: "无字幕视频也能自动生成时间轴 + 双语字幕，优先保证同步与可读性。",
+    status: "Coming Soon",
+  },
+];
+
+const ROADMAP = [
+  {
+    phase: "NOW",
+    name: "v0.1 稳定学习流",
+    desc: "悬停暂停查词、双语字幕、生词收藏导出，形成完整学习闭环。",
+  },
+  {
+    phase: "NEXT",
+    name: "AI 字幕 Beta",
+    desc: "支持无字幕视频自动转写与翻译，支持词级时间点与术语优化。",
+  },
+  {
+    phase: "LATER",
+    name: "更强学习模式",
+    desc: "加入精听跟读、难词回放、个性化复习建议，强化长期记忆效率。",
+  },
+];
+
+const STEPS = [
+  "下载插件 ZIP 并解压到本地目录。",
+  "打开 chrome://extensions 或 edge://extensions。",
+  "开启开发者模式，点击“加载已解压的扩展程序”，选择目录即可。",
+];
 
 export default function Home() {
   return (
     <>
       <main className="landing">
-        <div className="bg-glow" />
+        <div className="bg-orbs" />
+        <div className="bg-grid" />
+
         <div className="wrap">
           <header className="topbar">
             <div className="brand">
@@ -218,63 +539,100 @@ export default function Home() {
                 <p className="brand-sub">YouTube 字幕学习插件</p>
               </div>
             </div>
-            <a className="btn btn-small" href="/downloads/shadowinput-extension.zip" download>
-              下载插件
-            </a>
+
+            <div className="top-actions">
+              <span className="pill">Manifest V3</span>
+              <span className="pill">Chrome / Edge</span>
+              <a className="btn btn-primary" href="/downloads/shadowinput-extension.zip" download>
+                下载插件
+              </a>
+            </div>
           </header>
 
           <section className="hero">
-            <div className="hero-main">
+            <article className="panel hero-main">
               <p className="badge">Cyber Learning Mode</p>
               <h1>
-                看 YouTube 的同时
+                让 YouTube
                 <br />
-                更快学会英语字幕
+                变成你的沉浸式英语教室
               </h1>
-              <p className="desc">看到不会的词直接停住查，字幕双语对照，生词即时收藏，不打断观看节奏。</p>
-              <div className="actions">
-                <a className="btn" href="/downloads/shadowinput-extension.zip" download>
+              <p className="hero-desc">
+                ShadowInput 把“看视频 + 学语言”做成一个连续体验：看到不会的词直接停住查，字幕双语对照，生词即时收藏。
+                后续将加入 AI 字幕，让无字幕视频也能进入学习模式。
+              </p>
+
+              <div className="hero-actions">
+                <a className="btn btn-primary" href="/downloads/shadowinput-extension.zip" download>
                   立即下载 ZIP
                 </a>
-                <a className="btn btn-ghost" href="#install">
+                <a className="btn btn-secondary" href="#install">
                   查看安装步骤
                 </a>
               </div>
-            </div>
 
-            <div className="hero-side">
-              <p className="kicker">实时体验</p>
-              <p className="line line-en">even the UK wasn't this cold.</p>
-              <p className="line line-zh">即使在英国，也没这么冷。</p>
+              <div className="chips">
+                <span className="chip">双语字幕</span>
+                <span className="chip">悬停查词</span>
+                <span className="chip">生词本导出</span>
+                <span className="chip">AI 字幕 Soon</span>
+              </div>
+            </article>
+
+            <aside className="panel hero-side">
+              <p className="preview-title">实时体验</p>
+              <div className="subtitle-box">
+                <p className="en-line">even the UK wasn't this cold.</p>
+                <p className="zh-line">即使在英国，也没这么冷。</p>
+              </div>
+
+              <div className="ai-soon">
+                <p className="t1">AI 字幕计划</p>
+                <p className="t2">后续支持自动转写 + 翻译 + 对齐时间轴，解决“视频没字幕无法学”的问题。</p>
+              </div>
+            </aside>
+          </section>
+
+          <section className="section">
+            <h2 className="section-title">核心能力</h2>
+            <div className="features">
+              {FEATURES.map((feature) => (
+                <article key={feature.no} className="feature-card">
+                  <p className="feature-no">FEATURE {feature.no}</p>
+                  <h3 className="feature-title">{feature.title}</h3>
+                  <p className="feature-desc">{feature.desc}</p>
+                  {feature.status ? <span className="feature-status">{feature.status}</span> : null}
+                </article>
+              ))}
             </div>
           </section>
 
-          <section className="grid">
-            <article className="card">
-              <p className="tag">Hover to pause</p>
-              <h2>悬停即查询</h2>
-              <p>鼠标停在单词上，视频自动暂停并弹出释义，移开自动继续播放。</p>
-            </article>
-            <article className="card">
-              <p className="tag">EN + 中文</p>
-              <h2>双语字幕对照</h2>
-              <p>英文字幕下方直接显示中文字幕，跟读、理解和记忆更连贯。</p>
-            </article>
-            <article className="card">
-              <p className="tag">Flashcards</p>
-              <h2>生词收藏导出</h2>
-              <p>一键收藏生词，后续可在扩展里统一复习并导出。</p>
-            </article>
+          <section className="roadmap">
+            <h2 className="section-title">产品路线图</h2>
+            <div className="road-list">
+              {ROADMAP.map((item) => (
+                <article key={item.phase} className="road-item">
+                  <p className="phase">{item.phase}</p>
+                  <p className="name">{item.name}</p>
+                  <p className="desc">{item.desc}</p>
+                </article>
+              ))}
+            </div>
           </section>
 
           <section id="install" className="install">
-            <h2>安装只要 3 步</h2>
-            <ol>
-              <li>下载插件 ZIP 并解压到本地目录。</li>
-              <li>打开 chrome://extensions 或 edge://extensions。</li>
-              <li>开启开发者模式，点击“加载已解压的扩展程序”，选择目录即可。</li>
+            <h2 className="section-title">安装只要 3 步</h2>
+            <ol className="install-list">
+              {STEPS.map((step, idx) => (
+                <li key={step} className="install-item">
+                  <span className="step-no">{idx + 1}</span>
+                  <span className="step-text">{step}</span>
+                </li>
+              ))}
             </ol>
           </section>
+
+          <footer className="footer">ShadowInput · YouTube Learning Mode</footer>
         </div>
       </main>
 
