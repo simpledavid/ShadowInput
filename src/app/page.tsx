@@ -1,164 +1,284 @@
-const FEATURES = [
-  {
-    title: "悬停即查词",
-    desc: "鼠标停在单词上，视频自动暂停并弹出释义，移开自动继续播放。",
-    tag: "Hover to pause",
-  },
-  {
-    title: "双语字幕对照",
-    desc: "英文字幕下方直接显示中文字幕，跟读、理解和记忆更连贯。",
-    tag: "EN + 中文",
-  },
-  {
-    title: "生词收藏导出",
-    desc: "一键收藏生词，后续可在扩展里统一复习并导出。",
-    tag: "Flashcards",
-  },
-];
-
-const STEPS = [
-  "下载插件 ZIP 并解压到本地目录。",
-  "打开 chrome://extensions 或 edge://extensions。",
-  "开启开发者模式，点击“加载已解压的扩展程序”，选择目录即可。",
-];
+const LANDING_CSS = `
+  .landing {
+    min-height: 100vh;
+    color: #f4f7ff;
+    background: #050a16;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+  .bg-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 14% 0%, rgba(76, 130, 255, 0.22), transparent 42%),
+      radial-gradient(circle at 82% 18%, rgba(0, 229, 255, 0.14), transparent 40%),
+      radial-gradient(circle at 74% 84%, rgba(255, 75, 220, 0.12), transparent 38%);
+  }
+  .wrap {
+    position: relative;
+    width: min(1120px, 92vw);
+    margin: 0 auto;
+    padding: 24px 0 36px;
+  }
+  .topbar,
+  .hero,
+  .card,
+  .install {
+    border: 1px solid rgba(162, 244, 253, 0.2);
+    background: rgba(13, 20, 41, 0.84);
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #d7fbff;
+    border: 1px solid rgba(162, 244, 253, 0.6);
+    background: linear-gradient(135deg, rgba(83, 234, 253, 0.35), rgba(48, 128, 255, 0.35), rgba(236, 108, 255, 0.35));
+  }
+  .brand-name {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #f4f7ff;
+  }
+  .brand-sub {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(206, 250, 254, 0.78);
+  }
+  .hero {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 18px;
+    padding: 24px;
+  }
+  .badge {
+    display: inline-block;
+    margin: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(242, 169, 255, 0.45);
+    background: rgba(236, 108, 255, 0.1);
+    color: rgba(250, 232, 255, 0.95);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  h1 {
+    margin: 14px 0 0;
+    font-size: clamp(30px, 5vw, 54px);
+    line-height: 1.15;
+  }
+  .desc {
+    margin-top: 14px;
+    max-width: 720px;
+    color: rgba(228, 228, 231, 0.9);
+    line-height: 1.9;
+    font-size: 15px;
+  }
+  .actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(162, 244, 253, 0.4);
+    color: #071024;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    background: linear-gradient(90deg, #00d2ef, #3080ff);
+  }
+  .btn-ghost {
+    color: #cefafe;
+    background: rgba(83, 234, 253, 0.14);
+  }
+  .btn-small {
+    height: 36px;
+    font-size: 13px;
+    padding: 0 14px;
+  }
+  .hero-side {
+    border: 1px solid rgba(83, 234, 253, 0.24);
+    border-radius: 12px;
+    background: #0a1022;
+    padding: 16px;
+  }
+  .kicker {
+    margin: 0;
+    color: rgba(206, 250, 254, 0.78);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .line {
+    margin: 12px 0 0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .line-en {
+    border: 1px solid rgba(63, 63, 70, 0.9);
+    background: rgba(24, 24, 27, 0.74);
+    color: rgba(228, 228, 231, 0.95);
+  }
+  .line-zh {
+    border: 1px solid rgba(83, 234, 253, 0.33);
+    background: rgba(0, 210, 239, 0.12);
+    color: #cefafe;
+  }
+  .grid {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .card {
+    padding: 18px;
+  }
+  .tag {
+    margin: 0;
+    color: rgba(206, 250, 254, 0.78);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  h2 {
+    margin: 8px 0 0;
+    font-size: 22px;
+  }
+  .card p {
+    margin: 10px 0 0;
+    color: rgba(212, 212, 216, 0.9);
+    line-height: 1.8;
+    font-size: 14px;
+  }
+  .install {
+    margin-top: 20px;
+    padding: 20px;
+  }
+  .install ol {
+    margin: 14px 0 0;
+    padding-left: 20px;
+  }
+  .install li {
+    margin: 10px 0;
+    color: rgba(228, 228, 231, 0.92);
+    line-height: 1.8;
+  }
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+`;
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#060a16] text-zinc-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_14%_0%,rgba(76,130,255,0.22),transparent_42%),radial-gradient(circle_at_82%_18%,rgba(0,229,255,0.14),transparent_40%),radial-gradient(circle_at_74%_84%,rgba(255,75,220,0.12),transparent_38%)]" />
-
-      <div className="relative mx-auto w-[min(1120px,92vw)] py-6 md:py-8">
-        <header className="flex items-center justify-between rounded-xl border border-cyan-200/20 bg-[#0c1224]/70 px-4 py-3 backdrop-blur md:px-5">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg border border-cyan-200/60 bg-gradient-to-br from-cyan-300/35 via-blue-500/35 to-fuchsia-400/35 text-xl font-black text-cyan-100">
-              S
-            </div>
-            <div>
-              <p className="text-sm font-semibold tracking-wide text-zinc-100">ShadowInput</p>
-              <p className="text-xs text-cyan-100/70">YouTube 字幕学习插件</p>
-            </div>
-          </div>
-
-          <a
-            href="/downloads/shadowinput-extension.zip"
-            download
-            className="rounded-lg border border-cyan-200/45 bg-cyan-400/15 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/25"
-          >
-            下载插件
-          </a>
-        </header>
-
-        <section className="mt-6 grid gap-5 md:mt-8 md:grid-cols-[1.2fr_1fr]">
-          <article className="rounded-2xl border border-cyan-200/20 bg-[#0d1429]/85 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] md:p-8">
-            <p className="inline-flex rounded-full border border-fuchsia-300/40 bg-fuchsia-400/10 px-3 py-1 text-xs font-semibold tracking-wide text-fuchsia-100/90">
-              Cyber Learning Mode
-            </p>
-            <h1 className="mt-4 text-3xl font-extrabold leading-tight md:text-5xl">
-              看 YouTube 的同时
-              <br />
-              更快学会英语字幕
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-200/88 md:text-base">
-              参考 Trancy 的官网信息结构，ShadowInput 把“看视频 + 学语言”做成一个连续流程：
-              看到不会的词直接停住查，字幕双语对照，生词即时收藏，不打断观看节奏。
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a
-                href="/downloads/shadowinput-extension.zip"
-                download
-                className="rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-2.5 text-sm font-semibold text-[#071024] transition hover:from-cyan-300 hover:to-blue-400"
-              >
-                立即下载 ZIP
-              </a>
-              <a
-                href="#install"
-                className="rounded-lg border border-cyan-200/35 bg-cyan-300/10 px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/20"
-              >
-                查看安装步骤
-              </a>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              <span className="rounded-md border border-zinc-700/80 bg-zinc-900/80 px-2.5 py-1 text-xs text-zinc-300">
-                Chrome
-              </span>
-              <span className="rounded-md border border-zinc-700/80 bg-zinc-900/80 px-2.5 py-1 text-xs text-zinc-300">
-                Edge
-              </span>
-              <span className="rounded-md border border-zinc-700/80 bg-zinc-900/80 px-2.5 py-1 text-xs text-zinc-300">
-                Manifest V3
-              </span>
-            </div>
-          </article>
-
-          <article className="rounded-2xl border border-cyan-200/20 bg-[#0d1429]/85 p-5 md:p-6">
-            <div className="rounded-xl border border-cyan-300/25 bg-[#0a1022] p-4">
-              <p className="text-xs text-cyan-100/75">实时体验</p>
-              <p className="mt-2 text-lg font-semibold">字幕悬停暂停 + 双语显示</p>
-              <div className="mt-4 space-y-2">
-                <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-200">
-                  even the UK wasn’t this cold.
-                </div>
-                <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
-                  即使在英国，也没这么冷。
-                </div>
-              </div>
-              <div className="mt-4 h-px bg-gradient-to-r from-transparent via-cyan-200/30 to-transparent" />
-              <p className="mt-3 text-xs leading-6 text-zinc-300/85">
-                悬停单词可直接暂停视频并查词，点击心形收藏到生词本。
-              </p>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3">
-                <p className="text-xs text-cyan-100/70">核心场景</p>
-                <p className="mt-1 text-sm font-semibold">看视频学英语</p>
-              </div>
-              <div className="rounded-lg border border-fuchsia-300/20 bg-fuchsia-300/10 p-3">
-                <p className="text-xs text-fuchsia-100/70">学习闭环</p>
-                <p className="mt-1 text-sm font-semibold">查词到复习</p>
+    <>
+      <main className="landing">
+        <div className="bg-glow" />
+        <div className="wrap">
+          <header className="topbar">
+            <div className="brand">
+              <div className="logo">S</div>
+              <div>
+                <p className="brand-name">ShadowInput</p>
+                <p className="brand-sub">YouTube 字幕学习插件</p>
               </div>
             </div>
-          </article>
-        </section>
-
-        <section className="mt-5 grid gap-4 md:mt-6 md:grid-cols-3">
-          {FEATURES.map((item) => (
-            <article
-              key={item.title}
-              className="rounded-xl border border-cyan-200/18 bg-[#0d1429]/80 p-5"
-            >
-              <p className="text-xs font-semibold tracking-wide text-cyan-100/75">{item.tag}</p>
-              <h2 className="mt-2 text-lg font-semibold">{item.title}</h2>
-              <p className="mt-2 text-sm leading-7 text-zinc-300/90">{item.desc}</p>
-            </article>
-          ))}
-        </section>
-
-        <section id="install" className="mt-5 rounded-2xl border border-cyan-200/18 bg-[#0d1429]/82 p-6 md:mt-6 md:p-7">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-2xl font-bold">安装只要 3 步</h2>
-            <a
-              href="/downloads/shadowinput-extension.zip"
-              download
-              className="rounded-lg border border-fuchsia-300/45 bg-fuchsia-300/12 px-4 py-2 text-sm font-semibold text-fuchsia-100 transition hover:bg-fuchsia-300/20"
-            >
-              再次下载插件
+            <a className="btn btn-small" href="/downloads/shadowinput-extension.zip" download>
+              下载插件
             </a>
-          </div>
-          <ol className="mt-4 space-y-3">
-            {STEPS.map((step, idx) => (
-              <li key={step} className="flex items-start gap-3 rounded-lg border border-zinc-700/60 bg-zinc-900/55 px-4 py-3">
-                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-400/20 text-xs font-bold text-cyan-100">
-                  {idx + 1}
-                </span>
-                <span className="text-sm text-zinc-200/90">{step}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      </div>
-    </main>
+          </header>
+
+          <section className="hero">
+            <div className="hero-main">
+              <p className="badge">Cyber Learning Mode</p>
+              <h1>
+                看 YouTube 的同时
+                <br />
+                更快学会英语字幕
+              </h1>
+              <p className="desc">看到不会的词直接停住查，字幕双语对照，生词即时收藏，不打断观看节奏。</p>
+              <div className="actions">
+                <a className="btn" href="/downloads/shadowinput-extension.zip" download>
+                  立即下载 ZIP
+                </a>
+                <a className="btn btn-ghost" href="#install">
+                  查看安装步骤
+                </a>
+              </div>
+            </div>
+
+            <div className="hero-side">
+              <p className="kicker">实时体验</p>
+              <p className="line line-en">even the UK wasn't this cold.</p>
+              <p className="line line-zh">即使在英国，也没这么冷。</p>
+            </div>
+          </section>
+
+          <section className="grid">
+            <article className="card">
+              <p className="tag">Hover to pause</p>
+              <h2>悬停即查询</h2>
+              <p>鼠标停在单词上，视频自动暂停并弹出释义，移开自动继续播放。</p>
+            </article>
+            <article className="card">
+              <p className="tag">EN + 中文</p>
+              <h2>双语字幕对照</h2>
+              <p>英文字幕下方直接显示中文字幕，跟读、理解和记忆更连贯。</p>
+            </article>
+            <article className="card">
+              <p className="tag">Flashcards</p>
+              <h2>生词收藏导出</h2>
+              <p>一键收藏生词，后续可在扩展里统一复习并导出。</p>
+            </article>
+          </section>
+
+          <section id="install" className="install">
+            <h2>安装只要 3 步</h2>
+            <ol>
+              <li>下载插件 ZIP 并解压到本地目录。</li>
+              <li>打开 chrome://extensions 或 edge://extensions。</li>
+              <li>开启开发者模式，点击“加载已解压的扩展程序”，选择目录即可。</li>
+            </ol>
+          </section>
+        </div>
+      </main>
+
+      <style dangerouslySetInnerHTML={{ __html: LANDING_CSS }} />
+    </>
   );
 }
