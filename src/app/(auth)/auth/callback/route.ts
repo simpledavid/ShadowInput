@@ -1,0 +1,10 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const target = new URL("/api/auth/oauth/google/callback", url.origin);
+  target.search = url.search;
+  return NextResponse.redirect(target.toString());
+}

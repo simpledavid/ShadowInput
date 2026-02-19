@@ -1,0 +1,41 @@
+{
+  "name": "shadow-input",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "pages:build": "npm run build:cf && node scripts/prepare-pages-functions.mjs",
+    "build:cf": "npx @opennextjs/cloudflare build",
+    "preview": "npx @opennextjs/cloudflare build && npx wrangler pages dev",
+    "deploy": "npx @opennextjs/cloudflare build && npx wrangler pages deploy",
+    "db:migrate": "npx wrangler d1 execute shadow-input --file=d1/auth_schema.sql --remote && npx wrangler d1 execute shadow-input --file=d1/schema.sql --remote",
+    "db:migrate:local": "npx wrangler d1 execute shadow-input --file=d1/auth_schema.sql && npx wrangler d1 execute shadow-input --file=d1/schema.sql",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.75.0",
+    "better-auth": "^1.4.18",
+    "clsx": "^2.1.1",
+    "next": "^15.5.12",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.4.1",
+    "undici": "^7.22.0",
+    "youtube-transcript": "^1.2.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260218.0",
+    "@opennextjs/cloudflare": "^1.16.5",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^15.5.12",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "wrangler": "^4.66.0"
+  }
+}
