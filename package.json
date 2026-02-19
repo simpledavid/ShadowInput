@@ -7,6 +7,7 @@
     "build": "next build",
     "pages:build": "npm run build:cf && node scripts/prepare-pages-functions.mjs",
     "build:cf": "npx @opennextjs/cloudflare build",
+    "dict:build": "node scripts/build_local_dict_from_ecdict.js --max=50000",
     "preview": "npx @opennextjs/cloudflare build && npx wrangler pages dev",
     "deploy": "npx @opennextjs/cloudflare build && npx wrangler pages deploy",
     "db:migrate": "npx wrangler d1 execute shadow-input --file=d1/auth_schema.sql --remote && npx wrangler d1 execute shadow-input --file=d1/schema.sql --remote",

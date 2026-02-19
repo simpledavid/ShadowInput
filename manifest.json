@@ -16,6 +16,7 @@
     {
       "matches": ["https://www.youtube.com/watch*"],
       "js": [
+        "content/local-dict-data.js",
         "content/local-dict.js",
         "content/flashcard-store.js",
         "content/caption-provider.js",
