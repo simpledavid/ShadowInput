@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -265,53 +265,61 @@
     </div>
     <div class="header-text">
       <h1>ShadowInput</h1>
-      <p>YouTube Learning Mode</p>
+      <p>YouTube 生词学习</p>
     </div>
   </div>
 
   <div class="stats">
     <div class="stat">
       <div class="stat-value" id="card-count">0</div>
-      <div class="stat-label">Total</div>
+      <div class="stat-label">总数</div>
     </div>
     <div class="stat">
       <div class="stat-value" id="filtered-count">0</div>
-      <div class="stat-label">Filtered</div>
+      <div class="stat-label">筛选后</div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Filters</div>
+    <div class="section-title">筛选条件</div>
     <div class="filters">
       <select id="video-filter">
-        <option value="all">All videos</option>
+        <option value="all">全部视频</option>
       </select>
       <select id="date-filter">
-        <option value="all">All time</option>
-        <option value="today">Today</option>
-        <option value="7d">Last 7 days</option>
-        <option value="30d">Last 30 days</option>
+        <option value="all">全部时间</option>
+        <option value="today">今天</option>
+        <option value="7d">近 7 天</option>
+        <option value="30d">近 30 天</option>
       </select>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Recent Flashcards</div>
+    <div class="section-title">最近生词</div>
     <div class="card-list" id="card-list">
-      <div class="empty-state">No flashcards yet. Hover words in Learning Mode to add them.</div>
+      <div class="empty-state">还没有生词，进入学习模式后悬停单词即可收藏。</div>
     </div>
   </div>
 
   <div class="actions">
-    <button class="btn btn-primary" id="export-json-btn">Export JSON</button>
-    <button class="btn btn-primary" id="export-csv-btn">Export CSV</button>
-    <button class="btn" id="merge-btn">Merge Duplicates</button>
-    <button class="btn btn-danger" id="clear-btn">Clear All</button>
+    <select class="btn" id="export-scope">
+      <option value="filtered">导出当前筛选</option>
+      <option value="all">导出全部生词</option>
+    </select>
+    <select class="btn" id="export-format">
+      <option value="json">JSON</option>
+      <option value="csv">CSV</option>
+      <option value="txt">TXT</option>
+    </select>
+    <button class="btn btn-primary" id="export-btn">导出生词本</button>
+    <button class="btn" id="merge-btn">合并重复</button>
+    <button class="btn btn-danger" id="clear-btn">清空全部</button>
   </div>
 
   <div class="footer">
-    <a id="options-link">Settings</a>
-    <span id="status-msg">Done</span>
+    <a id="options-link">设置</a>
+    <span id="status-msg">完成</span>
   </div>
 
   <script src="popup.js"></script>

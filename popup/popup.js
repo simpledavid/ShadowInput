@@ -53,7 +53,7 @@ function renderVideoFilter(cards) {
   const prev = select.value || 'all';
 
   const ids = [...new Set(cards.map((c) => c.videoId).filter(Boolean))].sort();
-  select.innerHTML = '<option value="all">All videos</option>';
+  select.innerHTML = '<option value="all">全部视频</option>';
 
   ids.forEach((id) => {
     const opt = document.createElement('option');
@@ -74,7 +74,7 @@ function renderCards() {
   document.getElementById('filtered-count').textContent = filtered.length;
 
   if (!filtered.length) {
-    list.innerHTML = '<div class="empty-state">No flashcards match current filters.</div>';
+    list.innerHTML = '<div class="empty-state">当前筛选下没有生词。</div>';
     return;
   }
 
@@ -130,29 +130,72 @@ function downloadFile(content, filename, type) {
   URL.revokeObjectURL(url);
 }
 
-function exportJSON() {
-  const filtered = applyFilters(allCards);
-  if (!filtered.length) {
-    showStatus('No cards to export', '#f87171');
-    return;
-  }
-  downloadFile(JSON.stringify(filtered, null, 2), 'shadowinput-flashcards.json', 'application/json');
-  showStatus('JSON exported');
+function getCardsByScope(scope) {
+  if (scope === 'all') return [...allCards];
+  return applyFilters(allCards);
 }
 
-function exportCSV() {
-  const filtered = applyFilters(allCards);
-  if (!filtered.length) {
-    showStatus('No cards to export', '#f87171');
+function formatDateForFile(ts = Date.now()) {
+  const d = new Date(ts);
+  const p2 = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}`;
+}
+
+function buildFilename(ext, scope, count) {
+  const label = scope === 'all' ? 'all' : 'filtered';
+  return `shadowinput-flashcards-${label}-${count}-${formatDateForFile()}.${ext}`;
+}
+
+function exportJSON(cards, scope) {
+  downloadFile(
+    JSON.stringify(cards, null, 2),
+    buildFilename('json', scope, cards.length),
+    'application/json'
+  );
+}
+
+function exportCSV(cards, scope) {
+  const esc = (s) => `"${String(s || '').replace(/"/g, '""')}"`;
+  const header = 'word,translation,sentence,videoId,tMs,createdAt';
+  const rows = cards.map((c) =>
+    [esc(c.word), esc(c.translation), esc(c.sentence), esc(c.videoId), c.tMs || '', c.createdAt].join(',')
+  );
+  downloadFile(
+    [header, ...rows].join('\n'),
+    buildFilename('csv', scope, cards.length),
+    'text/csv'
+  );
+}
+
+function exportTXT(cards, scope) {
+  const rows = cards.map((c) => {
+    const word = String(c.word || '').trim();
+    const trans = String(c.translation || '').replace(/\s+/g, ' ').trim();
+    const sentence = String(c.sentence || '').replace(/\s+/g, ' ').trim();
+    return [word, trans, sentence].join('\t');
+  });
+  downloadFile(
+    rows.join('\n'),
+    buildFilename('txt', scope, cards.length),
+    'text/plain'
+  );
+}
+
+function handleExport() {
+  const scope = document.getElementById('export-scope').value;
+  const format = document.getElementById('export-format').value;
+  const cards = getCardsByScope(scope);
+  if (!cards.length) {
+    showStatus('没有可导出的生词', '#f87171');
     return;
   }
-  const esc = (s) => `"${String(s || '').replace(/"/g, '""')}"`;
-  const header = 'word,sentence,videoId,tMs,createdAt';
-  const rows = filtered.map((c) =>
-    [esc(c.word), esc(c.sentence), esc(c.videoId), c.tMs || '', c.createdAt].join(',')
-  );
-  downloadFile([header, ...rows].join('\n'), 'shadowinput-flashcards.csv', 'text/csv');
-  showStatus('CSV exported');
+
+  if (format === 'json') exportJSON(cards, scope);
+  else if (format === 'csv') exportCSV(cards, scope);
+  else exportTXT(cards, scope);
+
+  const scopeText = scope === 'all' ? '全部' : '筛选';
+  showStatus(`已导出${scopeText} ${cards.length} 条`);
 }
 
 async function mergeDuplicates() {
@@ -181,7 +224,7 @@ async function mergeDuplicates() {
   const removed = allCards.length - merged.length;
 
   if (removed <= 0) {
-    showStatus('No duplicates found');
+    showStatus('没有重复项');
     return;
   }
 
@@ -189,17 +232,17 @@ async function mergeDuplicates() {
   await saveCards(allCards);
   renderVideoFilter(allCards);
   renderCards();
-  showStatus(`Merged ${removed}`);
+  showStatus(`已合并 ${removed} 条重复项`);
 }
 
 async function clearAll() {
   if (!allCards.length) return;
-  if (!confirm(`Delete all ${allCards.length} flashcards?`)) return;
+  if (!confirm(`确认清空全部 ${allCards.length} 条生词吗？`)) return;
   allCards = [];
   await saveCards(allCards);
   renderVideoFilter(allCards);
   renderCards();
-  showStatus('Cleared');
+  showStatus('已清空');
 }
 
 function escHtml(str) {
@@ -212,8 +255,7 @@ function escHtml(str) {
 
 document.getElementById('video-filter').addEventListener('change', renderCards);
 document.getElementById('date-filter').addEventListener('change', renderCards);
-document.getElementById('export-json-btn').addEventListener('click', exportJSON);
-document.getElementById('export-csv-btn').addEventListener('click', exportCSV);
+document.getElementById('export-btn').addEventListener('click', handleExport);
 document.getElementById('merge-btn').addEventListener('click', mergeDuplicates);
 document.getElementById('clear-btn').addEventListener('click', clearAll);
 document.getElementById('options-link').addEventListener('click', () => {
