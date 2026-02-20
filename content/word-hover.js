@@ -14,6 +14,7 @@ ShadowInput.WordHoverMode = (() => {
   let state = S.IDLE;
   let dwellTimer = null;
   let resumeTimer = null;
+  let resumeExpectedToken = null;
   let activeWord = null;
   let isMouseInPopover = false;
   let isMouseInWord = false;
@@ -465,13 +466,17 @@ ShadowInput.WordHoverMode = (() => {
 
       isMouseInWord = false;
       isMouseInPopover = false;
-      scheduleResume();
+      if (!resumeTimer) scheduleResume();
     }, 120);
   }
 
   function scheduleResume(expectedToken = activePauseToken) {
+    if (resumeTimer && resumeExpectedToken === expectedToken) return;
     cancelResume();
+    resumeExpectedToken = expectedToken;
     resumeTimer = setTimeout(() => {
+      resumeTimer = null;
+      resumeExpectedToken = null;
       refreshHoverFlags();
       if (isMouseInWord || isMouseInPopover) {
         scheduleResume(expectedToken); // keep retrying until cursor fully leaves
@@ -496,6 +501,7 @@ ShadowInput.WordHoverMode = (() => {
       clearTimeout(resumeTimer);
       resumeTimer = null;
     }
+    resumeExpectedToken = null;
   }
 
   function onWordEnter(word, span) {
