@@ -24,6 +24,9 @@ ShadowInput.WordHoverMode = (() => {
   let overlayEl = null;
   let popoverEl = null;
   let currentSentence = '';
+  let currentWordTokens = [];
+  let phraseAnchorIndex = null;
+  let popoverContextSeq = 0;
 
   const lookupCache = new Map();
   const lookupPending = new Map();
@@ -224,11 +227,51 @@ ShadowInput.WordHoverMode = (() => {
     PC().setPlaybackRate(normalized);
   }
 
+  function clearPhraseSelection() {
+    phraseAnchorIndex = null;
+    if (!currentWordTokens.length) return;
+    currentWordTokens.forEach((token) => {
+      if (token && token.span) token.span.classList.remove('si-word-selected');
+    });
+  }
+
+  function applyPhraseSelection(startIndex, endIndex) {
+    if (!currentWordTokens.length) return;
+    const start = Math.max(0, Math.min(startIndex, endIndex));
+    const end = Math.min(currentWordTokens.length - 1, Math.max(startIndex, endIndex));
+
+    currentWordTokens.forEach((token, idx) => {
+      if (!token || !token.span) return;
+      token.span.classList.toggle('si-word-selected', idx >= start && idx <= end);
+    });
+
+  }
+
+  function getPhraseTextFromRange(startIndex, endIndex) {
+    if (!currentSentence || !currentWordTokens.length) return '';
+    const startToken = currentWordTokens[startIndex];
+    const endToken = currentWordTokens[endIndex];
+    if (!startToken || !endToken) return '';
+    return currentSentence.slice(startToken.start, endToken.end).replace(/\s+/g, ' ').trim();
+  }
+
+  function ensurePausedForSelection() {
+    if (state !== S.PAUSED) state = S.PAUSED;
+    if (!PC().isPaused()) {
+      PC().pause();
+      pauseTokenSeed += 1;
+      activePauseToken = pauseTokenSeed;
+    }
+    startHoverGuard();
+  }
+
   function renderCaption(text) {
     if (!text) return;
     if (state === S.PAUSED) return; // freeze overlay while paused to avoid hover state loss
     if (text === currentSentence) return;
 
+    clearPhraseSelection();
+    currentWordTokens = [];
     currentSentence = text;
     const overlay = ensureOverlay();
     overlay.innerHTML = '';
@@ -249,10 +292,19 @@ ShadowInput.WordHoverMode = (() => {
       span.className = 'si-word';
       span.textContent = match[0];
       span.dataset.word = match[0];
+      const tokenIndex = currentWordTokens.length;
+      span.dataset.wordIndex = String(tokenIndex);
       if (savedWords.has(match[0].toLowerCase())) span.classList.add('si-word-saved');
       span.addEventListener('mouseenter', () => onWordEnter(span.dataset.word, span));
       span.addEventListener('mouseleave', onWordLeave);
+      span.addEventListener('click', (e) => onWordClick(e, tokenIndex, span));
       enDiv.appendChild(span);
+      currentWordTokens.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        word: match[0],
+        span,
+      });
 
       lastIndex = match.index + match[0].length;
     }
@@ -367,6 +419,7 @@ ShadowInput.WordHoverMode = (() => {
   }
 
   async function showPopover(word, span) {
+    const popoverCtx = ++popoverContextSeq;
     const sentence = currentSentence;
     const popover = ensurePopover();
     const isSaved = savedWords.has(word.toLowerCase());
@@ -415,6 +468,7 @@ ShadowInput.WordHoverMode = (() => {
     const lookup = await lookupWord(word);
 
     if (!activeWord || activeWord.word !== word || state !== S.PAUSED || !popoverEl) return;
+    if (popoverCtx !== popoverContextSeq) return;
 
     const transEl = popover.querySelector('.si-popover-translation');
     currentTranslation = lookup.translation || 'No translation found';
@@ -430,9 +484,79 @@ ShadowInput.WordHoverMode = (() => {
     if (activeWord?.span) positionPopover(activeWord.span);
   }
 
+  async function lookupPhraseTranslation(phrase) {
+    let translated = '';
+    try {
+      translated = await translateSentenceOnline(phrase);
+    } catch (_) {}
+    if (translated) return translated;
+    const lookup = await lookupWord(phrase);
+    return lookup.translation || 'No translation found';
+  }
+
+  async function showPhrasePopover(phrase, span) {
+    const popoverCtx = ++popoverContextSeq;
+    const sentence = currentSentence;
+    const popover = ensurePopover();
+    const phraseKey = String(phrase || '').toLowerCase();
+    const isSaved = savedWords.has(phraseKey);
+    let currentTranslation = '';
+
+    popover.innerHTML = `
+      <span class="si-popover-translation si-loading">Querying...</span>
+      <button class="si-save-btn${isSaved ? ' si-saved' : ''}"
+              title="${isSaved ? 'Remove phrase' : 'Add phrase'}"
+              aria-label="${isSaved ? 'Remove phrase' : 'Add phrase'}">
+        ${heartIconSvg(isSaved)}
+      </button>
+    `;
+
+    popover.removeAttribute('title');
+    positionPopover(span);
+
+    const saveBtn = popover.querySelector('.si-save-btn');
+    saveBtn.addEventListener('click', async () => {
+      if (savedWords.has(phraseKey)) {
+        await FS().removeByWord(phrase);
+        savedWords.delete(phraseKey);
+        saveBtn.className = 'si-save-btn';
+        saveBtn.title = 'Add phrase';
+        saveBtn.setAttribute('aria-label', 'Add phrase');
+        saveBtn.innerHTML = heartIconSvg(false);
+      } else {
+        await FS().add({
+          word: phrase,
+          translation: currentTranslation || '',
+          sentence,
+          videoId: PC().getVideoId(),
+          tMs: PC().getCurrentTimeMs(),
+        });
+        savedWords.add(phraseKey);
+        saveBtn.className = 'si-save-btn si-saved';
+        saveBtn.title = 'Remove phrase';
+        saveBtn.setAttribute('aria-label', 'Remove phrase');
+        saveBtn.innerHTML = heartIconSvg(true);
+      }
+    });
+
+    const translated = await lookupPhraseTranslation(phrase);
+
+    if (state !== S.PAUSED || !popoverEl) return;
+    if (popoverCtx !== popoverContextSeq) return;
+
+    const transEl = popover.querySelector('.si-popover-translation');
+    currentTranslation = translated || 'No translation found';
+    if (transEl) {
+      transEl.classList.remove('si-loading');
+      transEl.textContent = currentTranslation;
+    }
+  }
+
   function hidePopover() {
     if (popoverEl) popoverEl.style.display = 'none';
+    popoverContextSeq += 1;
     isMouseInPopover = false;
+    clearPhraseSelection();
   }
 
   function isDomHoverActive() {
@@ -528,6 +652,39 @@ ShadowInput.WordHoverMode = (() => {
       startHoverGuard();
       showPopover(word, span);
     }, settings.dwellMs);
+  }
+
+  function onWordClick(event, index, span) {
+    if (!event.shiftKey) {
+      phraseAnchorIndex = index;
+      clearPhraseSelection();
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (state === S.DWELLING) {
+      clearTimeout(dwellTimer);
+      dwellTimer = null;
+    }
+
+    ensurePausedForSelection();
+
+    if (phraseAnchorIndex == null) {
+      phraseAnchorIndex = index;
+    }
+
+    const start = Math.min(phraseAnchorIndex, index);
+    const end = Math.max(phraseAnchorIndex, index);
+    applyPhraseSelection(start, end);
+
+    const phrase = getPhraseTextFromRange(start, end);
+    if (phrase) {
+      showPhrasePopover(phrase, span);
+    }
+
+    phraseAnchorIndex = index;
   }
 
   function onWordLeave() {

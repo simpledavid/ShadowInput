@@ -335,6 +335,12 @@
   outline: 1px solid var(--si-border-accent);
 }
 
+.si-word.si-word-selected {
+  background: rgba(99, 102, 241, 0.34);
+  color: #e0e7ff;
+  outline: 1px solid rgba(165, 180, 252, 0.9);
+}
+
 /* Saved words are tinted green in the overlay */
 .si-word.si-word-saved {
   color: #4ade80;
