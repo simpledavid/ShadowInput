@@ -421,6 +421,47 @@ ShadowInput.WordHoverMode = (() => {
     });
   }
 
+  function setWordSaveBtnState(saveBtn, saved) {
+    if (!saveBtn) return;
+    saveBtn.className = `si-save-btn${saved ? ' si-saved' : ''}`;
+    const label = saved ? 'Remove word' : 'Add word';
+    saveBtn.title = label;
+    saveBtn.setAttribute('aria-label', label);
+    saveBtn.innerHTML = heartIconSvg(saved);
+  }
+
+  async function toggleWordSaved(word, sentence, preferTranslation = '') {
+    const lw = String(word || '').toLowerCase();
+    if (!lw) return false;
+
+    if (savedWords.has(lw)) {
+      await FS().removeByWord(word);
+      savedWords.delete(lw);
+      updateOverlayWordState(word, false);
+      return false;
+    }
+
+    let translation = String(preferTranslation || '').trim();
+    if (!translation && lookupCache.has(lw)) {
+      translation = String(lookupCache.get(lw)?.translation || '').trim();
+    }
+    if (!translation) {
+      const lookup = await lookupWord(word);
+      translation = lookup.translation || '';
+    }
+
+    await FS().add({
+      word,
+      translation,
+      sentence: sentence || currentSentence,
+      videoId: PC().getVideoId(),
+      tMs: PC().getCurrentTimeMs(),
+    });
+    savedWords.add(lw);
+    updateOverlayWordState(word, true);
+    return true;
+  }
+
   async function showPopover(word, span) {
     const popoverCtx = ++popoverContextSeq;
     const sentence = currentSentence;
@@ -443,30 +484,8 @@ ShadowInput.WordHoverMode = (() => {
 
     const saveBtn = popover.querySelector('.si-save-btn');
     saveBtn.addEventListener('click', async () => {
-      const lw = word.toLowerCase();
-      if (savedWords.has(lw)) {
-        await FS().removeByWord(word);
-        savedWords.delete(lw);
-        saveBtn.className = 'si-save-btn';
-        saveBtn.title = 'Add word';
-        saveBtn.setAttribute('aria-label', 'Add word');
-        saveBtn.innerHTML = heartIconSvg(false);
-        updateOverlayWordState(word, false);
-      } else {
-        await FS().add({
-          word,
-          translation: currentTranslation || '',
-          sentence,
-          videoId: PC().getVideoId(),
-          tMs: PC().getCurrentTimeMs(),
-        });
-        savedWords.add(lw);
-        saveBtn.className = 'si-save-btn si-saved';
-        saveBtn.title = 'Remove word';
-        saveBtn.setAttribute('aria-label', 'Remove word');
-        saveBtn.innerHTML = heartIconSvg(true);
-        updateOverlayWordState(word, true);
-      }
+      const saved = await toggleWordSaved(word, sentence, currentTranslation);
+      setWordSaveBtnState(saveBtn, saved);
     });
 
     const lookup = await lookupWord(word);
@@ -672,6 +691,20 @@ ShadowInput.WordHoverMode = (() => {
 
   function onWordClick(event, index, span) {
     if (!event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const word = span?.dataset?.word || currentWordTokens[index]?.word;
+      if (!word) return;
+
+      toggleWordSaved(word, currentSentence)
+        .then((saved) => {
+          if (!popoverEl || !activeWord || activeWord.word !== word) return;
+          const saveBtn = popoverEl.querySelector('.si-save-btn');
+          setWordSaveBtnState(saveBtn, saved);
+        })
+        .catch(() => {});
+
       phraseAnchorIndex = index;
       clearPhraseSelection();
       return;
