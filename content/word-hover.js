@@ -435,7 +435,7 @@ ShadowInput.WordHoverMode = (() => {
   }
 
   function isDomHoverActive() {
-    const overWordOrNav = !!document.querySelector('.si-word:hover, .si-caption-tools:hover');
+    const overWordOrNav = !!document.querySelector('.si-word:hover');
     const overPopover = !!(popoverEl && popoverEl.matches(':hover'));
     return { overWordOrNav, overPopover };
   }
@@ -554,7 +554,7 @@ ShadowInput.WordHoverMode = (() => {
       isMouseInPopover = false;
       return;
     }
-    isMouseInWord = !!(element.closest('.si-word') || element.closest('.si-caption-tools'));
+    isMouseInWord = !!element.closest('.si-word');
     isMouseInPopover = !!(popoverEl && popoverEl.contains(element));
   }
 
@@ -572,6 +572,20 @@ ShadowInput.WordHoverMode = (() => {
     scheduleResume();
   }
 
+  function onDocumentPointerDown(e) {
+    if (state !== S.PAUSED) return;
+    const rawTarget = e.target;
+    const target =
+      rawTarget && rawTarget.nodeType === Node.TEXT_NODE ? rawTarget.parentElement : rawTarget;
+    if (!target || target.nodeType !== Node.ELEMENT_NODE) return;
+    if (target.closest('.si-word')) return;
+    if (popoverEl && popoverEl.contains(target)) return;
+
+    isMouseInWord = false;
+    isMouseInPopover = false;
+    scheduleResume();
+  }
+
   function activate(opts = {}) {
     settings = { ...settings, ...opts };
     state = S.IDLE;
@@ -582,6 +596,7 @@ ShadowInput.WordHoverMode = (() => {
     if (overlayEl) overlayEl.style.display = 'flex';
     document.addEventListener('mousemove', onDocumentMouseMove, true);
     document.addEventListener('mouseleave', onDocumentMouseLeave, true);
+    document.addEventListener('pointerdown', onDocumentPointerDown, true);
     window.addEventListener('blur', onWindowBlur, true);
   }
 
@@ -598,6 +613,7 @@ ShadowInput.WordHoverMode = (() => {
 
     document.removeEventListener('mousemove', onDocumentMouseMove, true);
     document.removeEventListener('mouseleave', onDocumentMouseLeave, true);
+    document.removeEventListener('pointerdown', onDocumentPointerDown, true);
     window.removeEventListener('blur', onWindowBlur, true);
 
     state = S.IDLE;
