@@ -19,9 +19,6 @@ ShadowInput.WordHoverMode = (() => {
   let isMouseInWord = false;
   let pauseTokenSeed = 0;
   let activePauseToken = null;
-  let lastMouseX = 0;
-  let lastMouseY = 0;
-  let hasMousePos = false;
 
   let overlayEl = null;
   let popoverEl = null;
@@ -37,6 +34,7 @@ ShadowInput.WordHoverMode = (() => {
   const prefetchQueue = [];
   let prefetchTimer = null;
   let prefetchWorking = false;
+  let hoverGuardTimer = null;
 
   const WORD_RE = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
   const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -444,12 +442,31 @@ ShadowInput.WordHoverMode = (() => {
 
   function refreshHoverFlags() {
     const domHover = isDomHoverActive();
-    if (domHover.overWordOrNav || domHover.overPopover) {
-      isMouseInWord = domHover.overWordOrNav;
-      isMouseInPopover = domHover.overPopover;
-      return;
-    }
-    refreshHoverFlagsFromPointer();
+    isMouseInWord = domHover.overWordOrNav;
+    isMouseInPopover = domHover.overPopover;
+  }
+
+  function stopHoverGuard() {
+    if (!hoverGuardTimer) return;
+    clearInterval(hoverGuardTimer);
+    hoverGuardTimer = null;
+  }
+
+  function startHoverGuard() {
+    if (hoverGuardTimer) return;
+    hoverGuardTimer = setInterval(() => {
+      if (state !== S.PAUSED) {
+        stopHoverGuard();
+        return;
+      }
+
+      const domHover = isDomHoverActive();
+      if (domHover.overWordOrNav || domHover.overPopover) return;
+
+      isMouseInWord = false;
+      isMouseInPopover = false;
+      scheduleResume();
+    }, 120);
   }
 
   function scheduleResume(expectedToken = activePauseToken) {
@@ -464,6 +481,7 @@ ShadowInput.WordHoverMode = (() => {
       state = S.IDLE;
       activeWord = null;
       hidePopover();
+      stopHoverGuard();
 
       if (expectedToken == null) return;
       if (activePauseToken !== expectedToken) return;
@@ -501,6 +519,7 @@ ShadowInput.WordHoverMode = (() => {
         pauseTokenSeed += 1;
         activePauseToken = pauseTokenSeed;
       }
+      startHoverGuard();
       showPopover(word, span);
     }, settings.dwellMs);
   }
@@ -520,9 +539,6 @@ ShadowInput.WordHoverMode = (() => {
 
   function onDocumentMouseMove(e) {
     if (state !== S.PAUSED) return;
-    hasMousePos = true;
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
 
     const rawTarget = e.target;
     const target =
@@ -542,15 +558,8 @@ ShadowInput.WordHoverMode = (() => {
     isMouseInPopover = !!(popoverEl && popoverEl.contains(element));
   }
 
-  function refreshHoverFlagsFromPointer() {
-    if (!hasMousePos) return;
-    const element = document.elementFromPoint(lastMouseX, lastMouseY);
-    updateHoverFlagsFromElement(element);
-  }
-
   function onDocumentMouseLeave() {
     if (state !== S.PAUSED) return;
-    hasMousePos = false;
     isMouseInWord = false;
     isMouseInPopover = false;
     scheduleResume();
@@ -558,7 +567,6 @@ ShadowInput.WordHoverMode = (() => {
 
   function onWindowBlur() {
     if (state !== S.PAUSED) return;
-    hasMousePos = false;
     isMouseInWord = false;
     isMouseInPopover = false;
     scheduleResume();
@@ -580,6 +588,7 @@ ShadowInput.WordHoverMode = (() => {
   function deactivate() {
     cancelResume();
     clearTimeout(dwellTimer);
+    stopHoverGuard();
     hidePopover();
 
     if (overlayEl) {
@@ -596,7 +605,6 @@ ShadowInput.WordHoverMode = (() => {
     isMouseInWord = false;
     isMouseInPopover = false;
     activePauseToken = null;
-    hasMousePos = false;
     currentSentence = '';
 
     prefetchQueue.length = 0;
@@ -604,6 +612,7 @@ ShadowInput.WordHoverMode = (() => {
       clearInterval(prefetchTimer);
       prefetchTimer = null;
     }
+    stopHoverGuard();
     prefetchWorking = false;
   }
 
