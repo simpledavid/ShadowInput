@@ -632,7 +632,12 @@ ShadowInput.WordHoverMode = (() => {
     isMouseInWord = true;
     cancelResume();
 
-    if (state === S.PAUSED && activeWord?.word === word) return;
+    if (state === S.PAUSED) {
+      if (activeWord?.word === word) return;
+      activeWord = { word, span };
+      showPopover(word, span);
+      return;
+    }
 
     if (state === S.DWELLING) clearTimeout(dwellTimer);
 
