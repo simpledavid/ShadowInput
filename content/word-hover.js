@@ -20,6 +20,7 @@ ShadowInput.WordHoverMode = (() => {
   let isMouseInWord = false;
   let pauseTokenSeed = 0;
   let activePauseToken = null;
+  let popoverSwitchLockUntil = 0;
 
   let overlayEl = null;
   let popoverEl = null;
@@ -42,6 +43,8 @@ ShadowInput.WordHoverMode = (() => {
 
   const WORD_RE = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
   const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+  const POPOVER_SWITCH_LOCK_MS = 220;
+  const PAUSED_RESUME_TRANSIT_MS = 320;
   let currentPlaybackRate = 1;
 
   async function loadSavedWords() {
@@ -436,6 +439,7 @@ ShadowInput.WordHoverMode = (() => {
 
     popover.removeAttribute('title');
     positionPopover(span);
+    popoverSwitchLockUntil = Date.now() + POPOVER_SWITCH_LOCK_MS;
 
     const saveBtn = popover.querySelector('.si-save-btn');
     saveBtn.addEventListener('click', async () => {
@@ -513,6 +517,7 @@ ShadowInput.WordHoverMode = (() => {
 
     popover.removeAttribute('title');
     positionPopover(span);
+    popoverSwitchLockUntil = Date.now() + POPOVER_SWITCH_LOCK_MS;
 
     const saveBtn = popover.querySelector('.si-save-btn');
     saveBtn.addEventListener('click', async () => {
@@ -556,6 +561,7 @@ ShadowInput.WordHoverMode = (() => {
     if (popoverEl) popoverEl.style.display = 'none';
     popoverContextSeq += 1;
     isMouseInPopover = false;
+    popoverSwitchLockUntil = 0;
     clearPhraseSelection();
   }
 
@@ -598,6 +604,10 @@ ShadowInput.WordHoverMode = (() => {
     if (resumeTimer && resumeExpectedToken === expectedToken) return;
     cancelResume();
     resumeExpectedToken = expectedToken;
+    const delayMs =
+      state === S.PAUSED
+        ? Math.max(settings.resumeDelayMs, PAUSED_RESUME_TRANSIT_MS)
+        : settings.resumeDelayMs;
     resumeTimer = setTimeout(() => {
       resumeTimer = null;
       resumeExpectedToken = null;
@@ -617,7 +627,7 @@ ShadowInput.WordHoverMode = (() => {
 
       activePauseToken = null;
       if (PC().isPaused()) PC().play();
-    }, settings.resumeDelayMs);
+    }, delayMs);
   }
 
   function cancelResume() {
@@ -634,6 +644,7 @@ ShadowInput.WordHoverMode = (() => {
 
     if (state === S.PAUSED) {
       if (activeWord?.word === word) return;
+      if (Date.now() < popoverSwitchLockUntil) return;
       activeWord = { word, span };
       showPopover(word, span);
       return;
