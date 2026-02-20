@@ -381,16 +381,6 @@ ShadowInput.WordHoverMode = (() => {
     return popoverEl;
   }
 
-  function heartIconSvg(filled) {
-    return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 20.6l-1.1-1C6.2 15.3 3 12.4 3 8.9 3 6.2 5.1 4 7.8 4c1.6 0 3.2.8 4.2 2.1C13 4.8 14.6 4 16.2 4 18.9 4 21 6.2 21 8.9c0 3.5-3.2 6.4-7.9 10.7l-1.1 1z"
-          ${filled ? 'fill="currentColor"' : 'fill="none"'}
-          stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    `;
-  }
-
   function positionPopover(span) {
     if (!popoverEl || !span) return;
     const spanRect = span.getBoundingClientRect();
@@ -419,15 +409,6 @@ ShadowInput.WordHoverMode = (() => {
         s.classList.toggle('si-word-saved', saved);
       }
     });
-  }
-
-  function setWordSaveBtnState(saveBtn, saved) {
-    if (!saveBtn) return;
-    saveBtn.className = `si-save-btn${saved ? ' si-saved' : ''}`;
-    const label = saved ? 'Remove word' : 'Add word';
-    saveBtn.title = label;
-    saveBtn.setAttribute('aria-label', label);
-    saveBtn.innerHTML = heartIconSvg(saved);
   }
 
   async function toggleWordSaved(word, sentence, preferTranslation = '') {
@@ -464,29 +445,15 @@ ShadowInput.WordHoverMode = (() => {
 
   async function showPopover(word, span) {
     const popoverCtx = ++popoverContextSeq;
-    const sentence = currentSentence;
     const popover = ensurePopover();
-    const isSaved = savedWords.has(word.toLowerCase());
-    let currentTranslation = '';
 
     popover.innerHTML = `
       <span class="si-popover-translation si-loading">Querying...</span>
-      <button class="si-save-btn${isSaved ? ' si-saved' : ''}"
-              title="${isSaved ? 'Remove word' : 'Add word'}"
-              aria-label="${isSaved ? 'Remove word' : 'Add word'}">
-        ${heartIconSvg(isSaved)}
-      </button>
     `;
 
     popover.removeAttribute('title');
     positionPopover(span);
     popoverSwitchLockUntil = Date.now() + POPOVER_SWITCH_LOCK_MS;
-
-    const saveBtn = popover.querySelector('.si-save-btn');
-    saveBtn.addEventListener('click', async () => {
-      const saved = await toggleWordSaved(word, sentence, currentTranslation);
-      setWordSaveBtnState(saveBtn, saved);
-    });
 
     const lookup = await lookupWord(word);
 
@@ -494,7 +461,7 @@ ShadowInput.WordHoverMode = (() => {
     if (popoverCtx !== popoverContextSeq) return;
 
     const transEl = popover.querySelector('.si-popover-translation');
-    currentTranslation = lookup.translation || 'No translation found';
+    const currentTranslation = lookup.translation || 'No translation found';
     if (transEl) {
       transEl.classList.remove('si-loading');
       transEl.textContent = currentTranslation;
@@ -519,49 +486,15 @@ ShadowInput.WordHoverMode = (() => {
 
   async function showPhrasePopover(phrase, span) {
     const popoverCtx = ++popoverContextSeq;
-    const sentence = currentSentence;
     const popover = ensurePopover();
-    const phraseKey = String(phrase || '').toLowerCase();
-    const isSaved = savedWords.has(phraseKey);
-    let currentTranslation = '';
 
     popover.innerHTML = `
       <span class="si-popover-translation si-loading">Querying...</span>
-      <button class="si-save-btn${isSaved ? ' si-saved' : ''}"
-              title="${isSaved ? 'Remove phrase' : 'Add phrase'}"
-              aria-label="${isSaved ? 'Remove phrase' : 'Add phrase'}">
-        ${heartIconSvg(isSaved)}
-      </button>
     `;
 
     popover.removeAttribute('title');
     positionPopover(span);
     popoverSwitchLockUntil = Date.now() + POPOVER_SWITCH_LOCK_MS;
-
-    const saveBtn = popover.querySelector('.si-save-btn');
-    saveBtn.addEventListener('click', async () => {
-      if (savedWords.has(phraseKey)) {
-        await FS().removeByWord(phrase);
-        savedWords.delete(phraseKey);
-        saveBtn.className = 'si-save-btn';
-        saveBtn.title = 'Add phrase';
-        saveBtn.setAttribute('aria-label', 'Add phrase');
-        saveBtn.innerHTML = heartIconSvg(false);
-      } else {
-        await FS().add({
-          word: phrase,
-          translation: currentTranslation || '',
-          sentence,
-          videoId: PC().getVideoId(),
-          tMs: PC().getCurrentTimeMs(),
-        });
-        savedWords.add(phraseKey);
-        saveBtn.className = 'si-save-btn si-saved';
-        saveBtn.title = 'Remove phrase';
-        saveBtn.setAttribute('aria-label', 'Remove phrase');
-        saveBtn.innerHTML = heartIconSvg(true);
-      }
-    });
 
     const translated = await lookupPhraseTranslation(phrase);
 
@@ -569,7 +502,7 @@ ShadowInput.WordHoverMode = (() => {
     if (popoverCtx !== popoverContextSeq) return;
 
     const transEl = popover.querySelector('.si-popover-translation');
-    currentTranslation = translated || 'No translation found';
+    const currentTranslation = translated || 'No translation found';
     if (transEl) {
       transEl.classList.remove('si-loading');
       transEl.textContent = currentTranslation;
@@ -697,13 +630,7 @@ ShadowInput.WordHoverMode = (() => {
       const word = span?.dataset?.word || currentWordTokens[index]?.word;
       if (!word) return;
 
-      toggleWordSaved(word, currentSentence)
-        .then((saved) => {
-          if (!popoverEl || !activeWord || activeWord.word !== word) return;
-          const saveBtn = popoverEl.querySelector('.si-save-btn');
-          setWordSaveBtnState(saveBtn, saved);
-        })
-        .catch(() => {});
+      toggleWordSaved(word, currentSentence).catch(() => {});
 
       phraseAnchorIndex = index;
       clearPhraseSelection();
