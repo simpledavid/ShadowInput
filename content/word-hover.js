@@ -457,10 +457,26 @@ ShadowInput.WordHoverMode = (() => {
     isMouseInPopover = false;
   }
 
+  function isDomHoverActive() {
+    const overWordOrNav = !!document.querySelector('.si-word:hover, .si-caption-nav:hover');
+    const overPopover = !!(popoverEl && popoverEl.matches(':hover'));
+    return { overWordOrNav, overPopover };
+  }
+
+  function refreshHoverFlags() {
+    const domHover = isDomHoverActive();
+    if (domHover.overWordOrNav || domHover.overPopover) {
+      isMouseInWord = domHover.overWordOrNav;
+      isMouseInPopover = domHover.overPopover;
+      return;
+    }
+    refreshHoverFlagsFromPointer();
+  }
+
   function scheduleResume(expectedToken = activePauseToken) {
     cancelResume();
     resumeTimer = setTimeout(() => {
-      refreshHoverFlagsFromPointer();
+      refreshHoverFlags();
       if (isMouseInWord || isMouseInPopover) {
         scheduleResume(expectedToken); // keep retrying until cursor fully leaves
         return;
