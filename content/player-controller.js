@@ -47,6 +47,33 @@ ShadowInput.PlayerController = (() => {
     seekTo(ms / 1000);
   }
 
+  function getPlaybackRate() {
+    const player = getPlayer();
+    if (player && typeof player.getPlaybackRate === 'function') {
+      const rate = Number(player.getPlaybackRate());
+      if (Number.isFinite(rate) && rate > 0) return rate;
+    }
+    const v = getVideo();
+    if (v && Number.isFinite(v.playbackRate) && v.playbackRate > 0) return v.playbackRate;
+    return 1;
+  }
+
+  function setPlaybackRate(rawRate) {
+    const rate = Math.max(0.25, Math.min(4, Number(rawRate) || 1));
+    const player = getPlayer();
+    if (player && typeof player.setPlaybackRate === 'function') {
+      try {
+        player.setPlaybackRate(rate);
+      } catch (_) {}
+    }
+    const v = getVideo();
+    if (v) {
+      try {
+        v.playbackRate = rate;
+      } catch (_) {}
+    }
+  }
+
   function getCurrentTime() {
     const player = getPlayer();
     if (player && typeof player.getCurrentTime === 'function') {
@@ -108,6 +135,8 @@ ShadowInput.PlayerController = (() => {
     play,
     seekTo,
     seekToMs,
+    getPlaybackRate,
+    setPlaybackRate,
     getCurrentTime,
     getCurrentTimeMs,
     getState,

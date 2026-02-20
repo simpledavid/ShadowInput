@@ -8,12 +8,7 @@ ShadowInput.WordHoverMode = (() => {
   const PC = () => ShadowInput.PlayerController;
   const FS = () => ShadowInput.FlashcardStore;
 
-  let settings = {
-    dwellMs: 80,
-    resumeDelayMs: 150,
-    onPrevSentence: null,
-    onNextSentence: null,
-  };
+  let settings = { dwellMs: 80, resumeDelayMs: 150 };
 
   const S = { IDLE: 'IDLE', DWELLING: 'DWELLING', PAUSED: 'PAUSED' };
   let state = S.IDLE;
@@ -31,10 +26,6 @@ ShadowInput.WordHoverMode = (() => {
   let overlayEl = null;
   let popoverEl = null;
   let currentSentence = '';
-  let navPrevBtnEl = null;
-  let navNextBtnEl = null;
-  let navStatusEl = null;
-  let navState = { index: -1, total: 0 };
 
   const lookupCache = new Map();
   const lookupPending = new Map();
@@ -48,6 +39,8 @@ ShadowInput.WordHoverMode = (() => {
   let prefetchWorking = false;
 
   const WORD_RE = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
+  const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+  let currentPlaybackRate = 1;
 
   async function loadSavedWords() {
     const cards = await FS().getAll();
@@ -211,29 +204,25 @@ ShadowInput.WordHoverMode = (() => {
     return overlayEl;
   }
 
-  function getNavState() {
-    const total = Math.max(0, Number(navState.total) || 0);
-    const index = Number(navState.index);
-    const normalizedIndex = Number.isFinite(index) ? Math.min(Math.max(index, -1), total - 1) : -1;
-    const canPrev = total > 0 && normalizedIndex > 0;
-    const canNext = total > 0 && (normalizedIndex < 0 || normalizedIndex < total - 1);
-    const current = total > 0 && normalizedIndex >= 0 ? normalizedIndex + 1 : 0;
-    return { total, index: normalizedIndex, current, canPrev, canNext };
+  function normalizePlaybackRate(rawRate) {
+    const n = Number(rawRate);
+    if (!Number.isFinite(n)) return 1;
+    let closest = SPEED_OPTIONS[0];
+    let minDiff = Math.abs(n - closest);
+    for (const rate of SPEED_OPTIONS) {
+      const diff = Math.abs(n - rate);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = rate;
+      }
+    }
+    return closest;
   }
 
-  function applyNavStateToDom() {
-    const { total, current, canPrev, canNext } = getNavState();
-    if (navPrevBtnEl) navPrevBtnEl.disabled = !canPrev;
-    if (navNextBtnEl) navNextBtnEl.disabled = !canNext;
-    if (navStatusEl) navStatusEl.textContent = total > 0 ? `${current}/${total}` : '--/--';
-  }
-
-  function setNavigationState(nextState = {}) {
-    navState = {
-      index: Number.isFinite(nextState.index) ? nextState.index : -1,
-      total: Number.isFinite(nextState.total) ? nextState.total : 0,
-    };
-    applyNavStateToDom();
+  function setPlaybackRate(rate) {
+    const normalized = normalizePlaybackRate(rate);
+    currentPlaybackRate = normalized;
+    PC().setPlaybackRate(normalized);
   }
 
   function renderCaption(text) {
@@ -286,44 +275,34 @@ ShadowInput.WordHoverMode = (() => {
       }
     }
 
-    const navDiv = document.createElement('div');
-    navDiv.className = 'si-caption-nav';
+    currentPlaybackRate = normalizePlaybackRate(PC().getPlaybackRate());
+    const toolsDiv = document.createElement('div');
+    toolsDiv.className = 'si-caption-tools';
 
-    const prevBtn = document.createElement('button');
-    prevBtn.type = 'button';
-    prevBtn.className = 'si-nav-btn';
-    prevBtn.textContent = '上一句';
-    prevBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof settings.onPrevSentence === 'function') settings.onPrevSentence();
+    const speedLabel = document.createElement('span');
+    speedLabel.className = 'si-speed-label';
+    speedLabel.textContent = '速度';
+
+    const speedSelect = document.createElement('select');
+    speedSelect.className = 'si-speed-select';
+    for (const rate of SPEED_OPTIONS) {
+      const option = document.createElement('option');
+      option.value = String(rate);
+      option.textContent = `${rate}x`;
+      if (Math.abs(rate - currentPlaybackRate) < 0.001) option.selected = true;
+      speedSelect.appendChild(option);
+    }
+    speedSelect.addEventListener('change', (e) => {
+      const value = e.target && e.target.value ? Number(e.target.value) : 1;
+      setPlaybackRate(value);
     });
 
-    const navStatus = document.createElement('span');
-    navStatus.className = 'si-nav-status';
-
-    const nextBtn = document.createElement('button');
-    nextBtn.type = 'button';
-    nextBtn.className = 'si-nav-btn';
-    nextBtn.textContent = '下一句';
-    nextBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof settings.onNextSentence === 'function') settings.onNextSentence();
-    });
-
-    navDiv.appendChild(prevBtn);
-    navDiv.appendChild(navStatus);
-    navDiv.appendChild(nextBtn);
-
-    navPrevBtnEl = prevBtn;
-    navNextBtnEl = nextBtn;
-    navStatusEl = navStatus;
-    applyNavStateToDom();
+    toolsDiv.appendChild(speedLabel);
+    toolsDiv.appendChild(speedSelect);
 
     overlay.appendChild(enDiv);
     overlay.appendChild(zhDiv);
-    overlay.appendChild(navDiv);
+    overlay.appendChild(toolsDiv);
   }
 
   function ensurePopover() {
@@ -458,7 +437,7 @@ ShadowInput.WordHoverMode = (() => {
   }
 
   function isDomHoverActive() {
-    const overWordOrNav = !!document.querySelector('.si-word:hover, .si-caption-nav:hover');
+    const overWordOrNav = !!document.querySelector('.si-word:hover, .si-caption-tools:hover');
     const overPopover = !!(popoverEl && popoverEl.matches(':hover'));
     return { overWordOrNav, overPopover };
   }
@@ -559,7 +538,7 @@ ShadowInput.WordHoverMode = (() => {
       isMouseInPopover = false;
       return;
     }
-    isMouseInWord = !!(element.closest('.si-word') || element.closest('.si-caption-nav'));
+    isMouseInWord = !!(element.closest('.si-word') || element.closest('.si-caption-tools'));
     isMouseInPopover = !!(popoverEl && popoverEl.contains(element));
   }
 
@@ -589,6 +568,7 @@ ShadowInput.WordHoverMode = (() => {
     settings = { ...settings, ...opts };
     state = S.IDLE;
     activePauseToken = null;
+    currentPlaybackRate = normalizePlaybackRate(PC().getPlaybackRate());
     loadSavedWords(); // async, non-blocking
     ensureOverlay();
     if (overlayEl) overlayEl.style.display = 'flex';
@@ -618,10 +598,6 @@ ShadowInput.WordHoverMode = (() => {
     activePauseToken = null;
     hasMousePos = false;
     currentSentence = '';
-    navState = { index: -1, total: 0 };
-    navPrevBtnEl = null;
-    navNextBtnEl = null;
-    navStatusEl = null;
 
     prefetchQueue.length = 0;
     if (prefetchTimer) {
@@ -666,5 +642,5 @@ ShadowInput.WordHoverMode = (() => {
     enqueuePrefetchFromCaption(text);
   }
 
-  return { activate, deactivate, destroy, onCaption, setCaptionMode, setNavigationState };
+  return { activate, deactivate, destroy, onCaption, setCaptionMode };
 })();
