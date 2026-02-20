@@ -11,6 +11,7 @@ ShadowInput.CaptionProvider = (() => {
   const CAPTION_SEGMENT_SELECTOR = '.ytp-caption-segment';
   const FULL_CUE_FETCH_RETRY_MS = [0, 250, 700, 1400];
   const LIVE_CUE_LIMIT = 1800;
+  const TIMELINE_TICK_MS = 120;
 
   let observer = null;
   let containerWatcherTimer = null;
@@ -24,6 +25,8 @@ ShadowInput.CaptionProvider = (() => {
   let fullCues = null; // preferred: full timedtext cues
   let liveCues = []; // fallback: seen-so-far live cues
   let fullFetchToken = 0;
+  let timelineTimer = null;
+  let lastTimelineCueIndex = -2;
 
   function simpleHash(str) {
     let h = 0;
@@ -132,7 +135,34 @@ ShadowInput.CaptionProvider = (() => {
     }
   }
 
+  function emitTimelineCue() {
+    if (!Array.isArray(fullCues) || !fullCues.length) return;
+
+    const idx = getCueIndex(getCurrentTimeMs());
+    if (idx === lastTimelineCueIndex) return;
+    lastTimelineCueIndex = idx;
+
+    if (idx < 0 || idx >= fullCues.length) return;
+    const cue = fullCues[idx];
+    notifyLive(cue.text, cue.startMs);
+  }
+
+  function startTimelineEmitter() {
+    stopTimelineEmitter();
+    lastTimelineCueIndex = -2;
+    timelineTimer = setInterval(() => {
+      emitTimelineCue();
+    }, TIMELINE_TICK_MS);
+  }
+
+  function stopTimelineEmitter() {
+    if (!timelineTimer) return;
+    clearInterval(timelineTimer);
+    timelineTimer = null;
+  }
+
   function emitCurrentCaption() {
+    if (Array.isArray(fullCues) && fullCues.length) return;
     const text = readCaptionText();
     if (!text || isDuplicate(text)) return;
     const tMs = getCurrentTimeMs();
@@ -305,9 +335,108 @@ ShadowInput.CaptionProvider = (() => {
       .trim();
   }
 
+  function countWords(text) {
+    if (!text) return 0;
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+
+  function squashProgressiveCues(cues) {
+    if (!Array.isArray(cues) || cues.length < 2) return cues || [];
+    const out = [];
+
+    for (const cue of cues) {
+      const prev = out[out.length - 1];
+      if (!prev) {
+        out.push({ ...cue });
+        continue;
+      }
+
+      if (cue.text === prev.text) {
+        prev.endMs = Math.max(prev.endMs, cue.endMs);
+        continue;
+      }
+
+      const almostSameStart = Math.abs(cue.startMs - prev.startMs) <= 350;
+      if (almostSameStart && cue.text.startsWith(prev.text)) {
+        prev.text = cue.text;
+        prev.endMs = Math.max(prev.endMs, cue.endMs);
+        continue;
+      }
+
+      out.push({ ...cue });
+    }
+
+    return out;
+  }
+
+  function shouldCoalesceWordLikeCues(cues) {
+    if (!Array.isArray(cues) || cues.length < 8) return false;
+    const n = Math.min(cues.length, 140);
+    let shortCount = 0;
+    let fastCount = 0;
+
+    for (let i = 0; i < n; i++) {
+      const cue = cues[i];
+      const words = countWords(cue.text);
+      const dur = Math.max(0, Number(cue.endMs || 0) - Number(cue.startMs || 0));
+      if (words <= 2) shortCount += 1;
+      if (dur > 0 && dur <= 900) fastCount += 1;
+    }
+
+    return shortCount / n >= 0.58 || fastCount / n >= 0.62;
+  }
+
+  function appendCueText(base, piece) {
+    const left = String(base || '').trim();
+    const right = String(piece || '').trim();
+    if (!left) return right;
+    if (!right) return left;
+
+    if (/^[,.;!?%:)\]}]/.test(right)) return left + right;
+    if (/[(\[{'"`]/.test(left.slice(-1))) return left + right;
+    return `${left} ${right}`;
+  }
+
+  function coalesceShortCues(cues) {
+    if (!Array.isArray(cues) || !cues.length) return [];
+    const merged = [];
+    let buf = null;
+
+    const flush = () => {
+      if (!buf || !buf.text) return;
+      merged.push(buf);
+      buf = null;
+    };
+
+    for (let i = 0; i < cues.length; i++) {
+      const cue = cues[i];
+      const next = cues[i + 1] || null;
+      const gapToNext = next ? Math.max(0, next.startMs - cue.endMs) : 9999;
+
+      if (!buf) {
+        buf = { ...cue };
+      } else {
+        buf.text = appendCueText(buf.text, cue.text);
+        buf.endMs = Math.max(buf.endMs, cue.endMs);
+      }
+
+      const text = buf.text || '';
+      const words = countWords(text);
+      const dur = Math.max(0, buf.endMs - buf.startMs);
+      const endsSentence = /[.!?。！？]$/.test(text);
+      const shouldFlush =
+        endsSentence || gapToNext > 620 || words >= 14 || dur >= 3600 || !next;
+
+      if (shouldFlush) flush();
+    }
+
+    flush();
+    return merged;
+  }
+
   function parseJson3Events(events) {
     if (!Array.isArray(events)) return [];
-    const cues = [];
+    const raw = [];
 
     for (const ev of events) {
       if (!Array.isArray(ev?.segs) || !ev.segs.length) continue;
@@ -318,18 +447,23 @@ ShadowInput.CaptionProvider = (() => {
       const durationMs = Math.max(0, Number(ev.dDurationMs || 0));
       const endMs = startMs + (durationMs > 0 ? durationMs : 1800);
 
-      const prev = cues[cues.length - 1];
+      const prev = raw[raw.length - 1];
       if (prev && prev.text === text && Math.abs(prev.startMs - startMs) < 1200) {
         prev.endMs = Math.max(prev.endMs, endMs);
         continue;
       }
 
-      cues.push({
+      raw.push({
         text,
         startMs,
         endMs,
         source: 'full',
       });
+    }
+
+    let cues = squashProgressiveCues(raw);
+    if (shouldCoalesceWordLikeCues(cues)) {
+      cues = coalesceShortCues(cues);
     }
 
     for (let i = 0; i < cues.length - 1; i++) {
@@ -372,6 +506,8 @@ ShadowInput.CaptionProvider = (() => {
         if (!cues.length) continue;
         fullCues = cues;
         notifyCues();
+        lastTimelineCueIndex = -2;
+        emitTimelineCue();
         return;
       } catch {}
     }
@@ -407,6 +543,8 @@ ShadowInput.CaptionProvider = (() => {
     recentHashes = [];
     fullCues = null;
     liveCues = [];
+    lastTimelineCueIndex = -2;
+    startTimelineEmitter();
     emitCurrentCaption();
     watchForContainer();
     loadFullTrackCues();
@@ -418,12 +556,14 @@ ShadowInput.CaptionProvider = (() => {
       observer = null;
     }
     clearContainerWatchers();
+    stopTimelineEmitter();
     fullFetchToken += 1;
     liveListeners = [];
     cuesListeners = [];
     recentHashes = [];
     fullCues = null;
     liveCues = [];
+    lastTimelineCueIndex = -2;
   }
 
   function getCueIndex(atMs = getCurrentTimeMs()) {
