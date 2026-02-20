@@ -18,9 +18,10 @@ ShadowInput.CaptionProvider = (() => {
   let cuesListeners = []; // fn(cues)
   let recentHashes = [];
   const DEDUP_WINDOW = 12;
+  const MAX_CUES = 1800;
 
-  // Full cues are not fetched for now, kept for API compatibility.
-  let fullCues = null;
+  // Live cues history (approximate timing, good enough for prev/next navigation).
+  let fullCues = [];
 
   function simpleHash(str) {
     let h = 0;
@@ -82,6 +83,41 @@ ShadowInput.CaptionProvider = (() => {
     });
   }
 
+  function notifyCues() {
+    const snapshot = fullCues.slice();
+    cuesListeners.forEach((fn) => {
+      try {
+        fn(snapshot);
+      } catch (e) {
+        console.error('[SI] cuesListener error', e);
+      }
+    });
+  }
+
+  function pushCue(text, tMs) {
+    if (!text) return;
+
+    const cue = {
+      text,
+      startMs: Math.max(0, Number(tMs) || 0),
+      endMs: Math.max(0, Number(tMs) || 0) + 2600,
+    };
+
+    const last = fullCues[fullCues.length - 1];
+    if (last) {
+      const safeEnd = Math.max(last.startMs + 120, cue.startMs - 40);
+      last.endMs = Math.max(last.endMs || 0, safeEnd);
+    }
+
+    fullCues.push(cue);
+
+    if (fullCues.length > MAX_CUES) {
+      fullCues = fullCues.slice(fullCues.length - MAX_CUES);
+    }
+
+    notifyCues();
+  }
+
   function clearContainerWatchers() {
     if (containerWatcherTimer) {
       clearInterval(containerWatcherTimer);
@@ -96,7 +132,9 @@ ShadowInput.CaptionProvider = (() => {
   function emitCurrentCaption() {
     const text = readCaptionText();
     if (!text || isDuplicate(text)) return;
-    notifyLive(text, getCurrentTimeMs());
+    const tMs = getCurrentTimeMs();
+    pushCue(text, tMs);
+    notifyLive(text, tMs);
   }
 
   function startObserver(container) {
@@ -157,9 +195,9 @@ ShadowInput.CaptionProvider = (() => {
 
   function onFullCues(fn) {
     cuesListeners.push(fn);
-    if (fullCues) {
+    if (fullCues.length) {
       try {
-        fn(fullCues);
+        fn(fullCues.slice());
       } catch (_) {}
     }
     return () => {
@@ -168,12 +206,12 @@ ShadowInput.CaptionProvider = (() => {
   }
 
   function getFullCues() {
-    return fullCues;
+    return fullCues.slice();
   }
 
   function start() {
     recentHashes = [];
-    fullCues = null;
+    fullCues = [];
     emitCurrentCaption();
     watchForContainer();
   }
@@ -187,15 +225,35 @@ ShadowInput.CaptionProvider = (() => {
     liveListeners = [];
     cuesListeners = [];
     recentHashes = [];
-    fullCues = null;
+    fullCues = [];
   }
 
-  function findCueAt() {
-    return null;
+  function getCueIndex(atMs = getCurrentTimeMs()) {
+    if (!fullCues.length) return -1;
+    const target = Number(atMs) || 0;
+
+    let lo = 0;
+    let hi = fullCues.length - 1;
+    let best = -1;
+
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (fullCues[mid].startMs <= target) {
+        best = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    if (best < 0) return -1;
+    return best;
   }
 
-  function getCueIndex() {
-    return -1;
+  function findCueAt(atMs = getCurrentTimeMs()) {
+    const idx = getCueIndex(atMs);
+    if (idx < 0 || idx >= fullCues.length) return null;
+    return fullCues[idx];
   }
 
   return { start, stop, onLiveCaption, onFullCues, getFullCues, findCueAt, getCueIndex };

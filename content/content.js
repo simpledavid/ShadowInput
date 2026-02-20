@@ -21,6 +21,8 @@
   let captionReceived = false;
   let captionTimeoutId = null;
   let unsubLive = null;
+  let unsubCues = null;
+  let navSyncTimer = null;
 
   async function init() {
     await loadSettings();
@@ -105,6 +107,46 @@
     }
   }
 
+  function getCues() {
+    return CP.getFullCues() || [];
+  }
+
+  function refreshSentenceNav() {
+    if (!isLearningMode || typeof WH.setNavigationState !== 'function') return;
+    const cues = getCues();
+    const total = cues.length;
+    const index = total > 0 ? CP.getCueIndex(PC.getCurrentTimeMs()) : -1;
+    WH.setNavigationState({ index, total });
+  }
+
+  function jumpSentence(offset) {
+    if (!isLearningMode) return;
+    const cues = getCues();
+    if (!cues.length) return;
+
+    const step = Number(offset);
+    if (!Number.isFinite(step) || step === 0) return;
+
+    const currentIndex = CP.getCueIndex(PC.getCurrentTimeMs());
+    let targetIndex;
+
+    if (currentIndex < 0) {
+      targetIndex = step > 0 ? 0 : cues.length - 1;
+    } else {
+      targetIndex = currentIndex + (step > 0 ? 1 : -1);
+    }
+
+    targetIndex = Math.max(0, Math.min(targetIndex, cues.length - 1));
+    const cue = cues[targetIndex];
+    if (!cue) return;
+
+    const seekMs = Math.max(0, Number(cue.startMs || 0) - 120);
+    PC.seekToMs(seekMs);
+    if (cue.text) WH.onCaption(cue.text);
+
+    setTimeout(refreshSentenceNav, 80);
+  }
+
   function enterLearningMode() {
     isLearningMode = true;
     captionReceived = false;
@@ -118,6 +160,8 @@
     WH.activate({
       dwellMs: settings.dwellMs,
       resumeDelayMs: settings.resumeDelayMs,
+      onPrevSentence: () => jumpSentence(-1),
+      onNextSentence: () => jumpSentence(1),
     });
 
     unsubLive = CP.onLiveCaption((text) => {
@@ -133,8 +177,19 @@
 
       UI.hideNoCaptionNotice();
       WH.onCaption(text);
+      refreshSentenceNav();
     });
+
+    unsubCues = CP.onFullCues(() => {
+      refreshSentenceNav();
+    });
+
     CP.start();
+    refreshSentenceNav();
+
+    navSyncTimer = setInterval(() => {
+      refreshSentenceNav();
+    }, 500);
 
     captionTimeoutId = setTimeout(() => {
       if (!captionReceived) UI.showNoCaptionNotice();
@@ -150,6 +205,14 @@
     if (unsubLive) {
       unsubLive();
       unsubLive = null;
+    }
+    if (unsubCues) {
+      unsubCues();
+      unsubCues = null;
+    }
+    if (navSyncTimer) {
+      clearInterval(navSyncTimer);
+      navSyncTimer = null;
     }
     if (captionTimeoutId) {
       clearTimeout(captionTimeoutId);

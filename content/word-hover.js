@@ -8,7 +8,12 @@ ShadowInput.WordHoverMode = (() => {
   const PC = () => ShadowInput.PlayerController;
   const FS = () => ShadowInput.FlashcardStore;
 
-  let settings = { dwellMs: 80, resumeDelayMs: 150 };
+  let settings = {
+    dwellMs: 80,
+    resumeDelayMs: 150,
+    onPrevSentence: null,
+    onNextSentence: null,
+  };
 
   const S = { IDLE: 'IDLE', DWELLING: 'DWELLING', PAUSED: 'PAUSED' };
   let state = S.IDLE;
@@ -26,6 +31,10 @@ ShadowInput.WordHoverMode = (() => {
   let overlayEl = null;
   let popoverEl = null;
   let currentSentence = '';
+  let navPrevBtnEl = null;
+  let navNextBtnEl = null;
+  let navStatusEl = null;
+  let navState = { index: -1, total: 0 };
 
   const lookupCache = new Map();
   const lookupPending = new Map();
@@ -202,6 +211,31 @@ ShadowInput.WordHoverMode = (() => {
     return overlayEl;
   }
 
+  function getNavState() {
+    const total = Math.max(0, Number(navState.total) || 0);
+    const index = Number(navState.index);
+    const normalizedIndex = Number.isFinite(index) ? Math.min(Math.max(index, -1), total - 1) : -1;
+    const canPrev = total > 0 && normalizedIndex > 0;
+    const canNext = total > 0 && (normalizedIndex < 0 || normalizedIndex < total - 1);
+    const current = total > 0 && normalizedIndex >= 0 ? normalizedIndex + 1 : 0;
+    return { total, index: normalizedIndex, current, canPrev, canNext };
+  }
+
+  function applyNavStateToDom() {
+    const { total, current, canPrev, canNext } = getNavState();
+    if (navPrevBtnEl) navPrevBtnEl.disabled = !canPrev;
+    if (navNextBtnEl) navNextBtnEl.disabled = !canNext;
+    if (navStatusEl) navStatusEl.textContent = total > 0 ? `${current}/${total}` : '--/--';
+  }
+
+  function setNavigationState(nextState = {}) {
+    navState = {
+      index: Number.isFinite(nextState.index) ? nextState.index : -1,
+      total: Number.isFinite(nextState.total) ? nextState.total : 0,
+    };
+    applyNavStateToDom();
+  }
+
   function renderCaption(text) {
     if (!text) return;
     if (state === S.PAUSED) return; // freeze overlay while paused to avoid hover state loss
@@ -252,8 +286,44 @@ ShadowInput.WordHoverMode = (() => {
       }
     }
 
+    const navDiv = document.createElement('div');
+    navDiv.className = 'si-caption-nav';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'si-nav-btn';
+    prevBtn.textContent = '上一句';
+    prevBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof settings.onPrevSentence === 'function') settings.onPrevSentence();
+    });
+
+    const navStatus = document.createElement('span');
+    navStatus.className = 'si-nav-status';
+
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'si-nav-btn';
+    nextBtn.textContent = '下一句';
+    nextBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof settings.onNextSentence === 'function') settings.onNextSentence();
+    });
+
+    navDiv.appendChild(prevBtn);
+    navDiv.appendChild(navStatus);
+    navDiv.appendChild(nextBtn);
+
+    navPrevBtnEl = prevBtn;
+    navNextBtnEl = nextBtn;
+    navStatusEl = navStatus;
+    applyNavStateToDom();
+
     overlay.appendChild(enDiv);
     overlay.appendChild(zhDiv);
+    overlay.appendChild(navDiv);
   }
 
   function ensurePopover() {
@@ -473,7 +543,7 @@ ShadowInput.WordHoverMode = (() => {
       isMouseInPopover = false;
       return;
     }
-    isMouseInWord = !!element.closest('.si-word');
+    isMouseInWord = !!(element.closest('.si-word') || element.closest('.si-caption-nav'));
     isMouseInPopover = !!(popoverEl && popoverEl.contains(element));
   }
 
@@ -532,6 +602,10 @@ ShadowInput.WordHoverMode = (() => {
     activePauseToken = null;
     hasMousePos = false;
     currentSentence = '';
+    navState = { index: -1, total: 0 };
+    navPrevBtnEl = null;
+    navNextBtnEl = null;
+    navStatusEl = null;
 
     prefetchQueue.length = 0;
     if (prefetchTimer) {
@@ -576,5 +650,5 @@ ShadowInput.WordHoverMode = (() => {
     enqueuePrefetchFromCaption(text);
   }
 
-  return { activate, deactivate, destroy, onCaption, setCaptionMode };
+  return { activate, deactivate, destroy, onCaption, setCaptionMode, setNavigationState };
 })();
